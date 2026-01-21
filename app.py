@@ -47,19 +47,16 @@ def apply_ui_design():
         }}
 
         /* UPLOADER TEXT VISIBILITY FIX */
-        /* Targets the 'Drag and drop file here' text */
         [data-testid="stFileUploadDropzone"] div {{
             color: #000000 !important;
             font-weight: 700 !important;
         }}
         
-        /* Targets the 'Browse files' button text */
         [data-testid="stFileUploadDropzone"] button span {{
             color: #000000 !important;
             font-weight: 800 !important;
         }}
 
-        /* Targets the 'Limit 200MB' small text */
         [data-testid="stFileUploadDropzone"] small {{
             color: #333333 !important;
             font-weight: 600 !important;
@@ -147,7 +144,7 @@ def main():
             ("Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
             ("The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
             ("Mosaic Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=300"),
-            ("Oil Abstraction", "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=300")
+            ("Oil Abstraction", "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=300")
         ]
         for name, url in styles_ref:
             st.image(url, caption=name, use_column_width=True)
