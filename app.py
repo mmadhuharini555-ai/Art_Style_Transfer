@@ -2,8 +2,6 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-import base64
-
 from tensorflow.keras.applications import VGG19
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import Model
@@ -19,80 +17,84 @@ def apply_artistic_theme():
     <style>
         /* Set Background Image */
         .stApp {{
-            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("{bg_img_url}");
+            background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url("{bg_img_url}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }}
 
-        /* Import Fonts */
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-
-        /* Header Styling */
+        /* Radiant Title Styling */
         .main-title {{
             font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 60px !important;
+            font-weight: 900;
+            font-size: 85px !important;
             text-align: center;
-            color: #ffffff;
+            /* Radiant Gradient Effect */
+            background: linear-gradient(to right, #00f2fe 0%, #4facfe 30%, #00f2fe 60%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             margin-bottom: 0px;
-            text-shadow: 0px 0px 20px rgba(0,255,255,0.5);
+            filter: drop-shadow(0px 0px 15px rgba(79, 172, 254, 0.8));
+            letter-spacing: -2px;
         }}
 
         .sub-title {{
             font-family: 'Montserrat', sans-serif;
             text-align: center;
-            letter-spacing: 4px;
-            color: #bdc3c7;
-            font-size: 14px;
+            letter-spacing: 5px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 300;
             margin-bottom: 50px;
             text-transform: uppercase;
+            opacity: 0.9;
         }}
 
-        /* FIXING THE UPLOAD BOXES */
-        /* This targets the actual Streamlit File Uploader container */
+        /* File Uploader Container */
         [data-testid="stFileUploader"] {{
-            background: rgba(255, 255, 255, 0.07);
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            padding: 20px;
-            color: white !important;
+            border-radius: 20px;
+            border: 2px dashed rgba(79, 172, 254, 0.5);
+            padding: 25px;
         }}
 
-        /* Ensuring text inside uploader is bright and visible */
-        [data-testid="stFileUploader"] section {{
-            color: white !important;
-        }}
-        
+        /* Labels for Uploaders */
         [data-testid="stFileUploader"] label {{
-            color: #f1c40f !important; /* Golden labels */
-            font-size: 1.5rem !important;
-            font-weight: bold !important;
-            margin-bottom: 15px !important;
+            color: #4facfe !important;
+            font-size: 1.8rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 20px !important;
+            text-shadow: 0px 0px 10px rgba(79, 172, 254, 0.3);
+        }}
+
+        /* Make "Drag and drop" text clearly visible */
+        [data-testid="stFileUploadDropzone"] div {{
+            color: #ffffff !important;
         }}
 
         /* Button Styling */
         .stButton>button {{
             width: 100%;
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
             color: white;
             font-weight: bold;
             border: none;
-            padding: 20px;
-            border-radius: 50px;
-            transition: 0.4s;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            transition: 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
         }}
 
         .stButton>button:hover {{
-            box-shadow: 0 0 30px rgba(0, 198, 255, 0.6);
-            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.6);
+            transform: translateY(-2px);
         }}
 
-        /* Remove the streamlit branding */
+        /* Clean up Streamlit UI */
         #MainMenu, footer, header {{visibility: hidden;}}
     </style>
     """, unsafe_allow_html=True)
@@ -113,7 +115,7 @@ def get_model():
 
 def load_and_process_image(image):
     img = image.resize((IMG_SIZE, IMG_SIZE))
-    img = tf.keras.preprocessing.image.img_to_array(img)
+    img = img_to_array(img)
     img = np.expand_dims(img, axis=0)
     return tf.keras.applications.vgg19.preprocess_input(img)
 
@@ -140,25 +142,26 @@ def main():
     st.markdown('<h1 class="main-title">Neural Art Gallery</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-title">Synthesizing Human Creativity with Machine Intelligence</p>', unsafe_allow_html=True)
 
-    # Workspace
     col1, col2 = st.columns(2)
 
     with col1:
-        # We use the label of the uploader to show the text you wanted
-        content_file = st.file_uploader("🖼️ Give your content image", type=["jpg", "png", "jpeg"])
+        # Reverted back to Subject Image
+        content_file = st.file_uploader("🖼️ Subject Image", type=["jpg", "png", "jpeg"])
         if content_file:
             content_img = Image.open(content_file).convert("RGB")
-            st.image(content_img, caption="Subject Photo", use_column_width=True)
+            st.image(content_img, use_column_width=True)
 
     with col2:
-        style_file = st.file_uploader("🎨 Give your style image", type=["jpg", "png", "jpeg"])
+        # Reverted back to Artistic Style
+        style_file = st.file_uploader("🎨 Artistic Style", type=["jpg", "png", "jpeg"])
         if style_file:
             style_img = Image.open(style_file).convert("RGB")
-            st.image(style_img, caption="Style Inspiration", use_column_width=True)
+            st.image(style_img, use_column_width=True)
 
     if content_file and style_file:
-        if st.button("🖌️ Create Masterpiece"):
-            with st.status("🎨 Applying AI Brushstrokes...", expanded=True):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🖌️ Generate Masterpiece"):
+            with st.status("🎨 Mixing colors and applying AI brushstrokes...", expanded=True):
                 model = get_model()
                 c_tensor = load_and_process_image(content_img)
                 s_tensor = load_and_process_image(style_img)
@@ -170,7 +173,6 @@ def main():
                 gen_img = tf.Variable(c_tensor, dtype=tf.float32)
                 opt = tf.optimizers.Adam(learning_rate=5.0)
 
-                # Short loop for demonstration (you can increase iterations)
                 for i in range(101):
                     with tf.GradientTape() as tape:
                         outputs = model(gen_img)
@@ -182,7 +184,7 @@ def main():
                     opt.apply_gradients([(grad, gen_img)])
                 
             final_image = deprocess_image(gen_img)
-            st.markdown("<div style='text-align:center;'><h2>Final Artwork</h2></div>", unsafe_allow_html=True)
+            st.markdown("<div style='text-align:center; padding-top:40px;'><h1>Final Masterpiece</h1></div>", unsafe_allow_html=True)
             st.image(final_image, use_column_width=True)
 
 if __name__ == "__main__":
