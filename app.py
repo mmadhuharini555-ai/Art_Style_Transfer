@@ -2,105 +2,85 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import requests
+from io import BytesIO
 from tensorflow.keras.applications import VGG19
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import Model
 
 # -------------------------------
-# 🎨 UI & BACKGROUND CONFIGURATION
+# 🎨 ADVANCED UI CONFIGURATION
 # -------------------------------
-def apply_artistic_theme():
-    # High-quality Art Background Image
+def apply_advanced_theme():
     bg_img_url = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
 
     st.markdown(f"""
     <style>
-        /* Set Background Image */
         .stApp {{
-            background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url("{bg_img_url}");
+            background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url("{bg_img_url}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }}
 
-        /* Radiant Title Styling */
+        /* Radiant Glowing Title */
         .main-title {{
             font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            font-size: 85px !important;
+            font-size: 90px !important;
             text-align: center;
-            /* Radiant Gradient Effect */
-            background: linear-gradient(to right, #00f2fe 0%, #4facfe 30%, #00f2fe 60%, #ffffff 100%);
+            background: linear-gradient(to right, #00f2fe, #4facfe, #7117ea, #ea4444);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0px;
-            filter: drop-shadow(0px 0px 15px rgba(79, 172, 254, 0.8));
-            letter-spacing: -2px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0px 0px 20px rgba(79, 172, 254, 0.5));
         }}
 
-        .sub-title {{
-            font-family: 'Montserrat', sans-serif;
+        /* BIGGER LABELS FOR UPLOADERS */
+        .big-label {{
+            font-size: 45px !important;
+            font-weight: 800 !important;
+            color: #4facfe !important;
             text-align: center;
-            letter-spacing: 5px;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 300;
-            margin-bottom: 50px;
+            margin-bottom: 20px;
             text-transform: uppercase;
-            opacity: 0.9;
+            text-shadow: 2px 2px 15px rgba(0,0,0,0.5);
         }}
 
-        /* File Uploader Container */
         [data-testid="stFileUploader"] {{
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 2px dashed rgba(79, 172, 254, 0.5);
-            padding: 25px;
+            border: 3px dashed rgba(79, 172, 254, 0.4);
+            border-radius: 25px;
+            padding: 30px;
         }}
 
-        /* Labels for Uploaders */
-        [data-testid="stFileUploader"] label {{
-            color: #4facfe !important;
-            font-size: 1.8rem !important;
-            font-weight: 700 !important;
-            margin-bottom: 20px !important;
-            text-shadow: 0px 0px 10px rgba(79, 172, 254, 0.3);
+        /* Sidebar Styling */
+        [data-testid="stSidebar"] {{
+            background: rgba(0, 0, 0, 0.8) !important;
+            border-right: 1px solid #4facfe;
         }}
 
-        /* Make "Drag and drop" text clearly visible */
-        [data-testid="stFileUploadDropzone"] div {{
-            color: #ffffff !important;
-        }}
-
-        /* Button Styling */
         .stButton>button {{
             width: 100%;
-            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            background: linear-gradient(45deg, #7117ea, #ea4444);
             color: white;
             font-weight: bold;
+            font-size: 1.5rem;
+            padding: 20px;
+            border-radius: 15px;
             border: none;
-            padding: 18px;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            transition: 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+            transition: 0.3s;
         }}
-
+        
         .stButton>button:hover {{
-            box-shadow: 0 0 30px rgba(79, 172, 254, 0.6);
-            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(234, 68, 68, 0.6);
+            transform: scale(1.02);
         }}
-
-        /* Clean up Streamlit UI */
-        #MainMenu, footer, header {{visibility: hidden;}}
     </style>
     """, unsafe_allow_html=True)
 
 # -------------------------------
-# 🧠 AI LOGIC
+# 🧠 AI ENGINE (VGG19)
 # -------------------------------
 IMG_SIZE = 224
 STYLE_LAYERS = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
@@ -113,13 +93,17 @@ def get_model():
     outputs = [vgg.get_layer(name).output for name in STYLE_LAYERS + CONTENT_LAYERS]
     return Model(vgg.input, outputs)
 
-def load_and_process_image(image):
-    img = image.resize((IMG_SIZE, IMG_SIZE))
+def load_img_from_url(url):
+    response = requests.get(url)
+    return Image.open(BytesIO(response.content)).convert("RGB")
+
+def preprocess(img):
+    img = img.resize((IMG_SIZE, IMG_SIZE))
     img = img_to_array(img)
     img = np.expand_dims(img, axis=0)
     return tf.keras.applications.vgg19.preprocess_input(img)
 
-def deprocess_image(img):
+def deprocess(img):
     img = img.numpy().reshape((IMG_SIZE, IMG_SIZE, 3))
     img[:, :, 0] += 103.939
     img[:, :, 1] += 116.779
@@ -136,35 +120,63 @@ def gram_matrix(input_tensor):
 # 🚀 APP UI
 # -------------------------------
 def main():
-    st.set_page_config(page_title="Neural Art Gallery", layout="wide")
-    apply_artistic_theme()
+    st.set_page_config(page_title="Neural Art Studio Pro", layout="wide")
+    apply_advanced_theme()
 
     st.markdown('<h1 class="main-title">Neural Art Gallery</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-title">Synthesizing Human Creativity with Machine Intelligence</p>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align:center; color:white; letter-spacing:3px;">THE AI-POWERED ARTISTIC REVOLUTION</p>', unsafe_allow_html=True)
 
+    # --- SIDEBAR: Studio Controls ---
+    st.sidebar.markdown("# 🎨 Studio Controls")
+    st.sidebar.info("Fine-tune how the AI paints your image.")
+    iterations = st.sidebar.slider("Brush Strokes (Quality)", 50, 500, 100)
+    style_strength = st.sidebar.select_slider("Style Strength", options=["Subtle", "Medium", "Heavy"], value="Medium")
+    
+    weight_map = {"Subtle": 1e-4, "Medium": 1e-2, "Heavy": 1e-1}
+    s_weight = weight_map[style_strength]
+
+    # --- STYLE PRESETS ---
+    st.markdown("### 🌟 Quick Presets (Click to choose a style)")
+    presets = {
+        "Starry Night": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1200px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg",
+        "The Scream": "https://upload.wikimedia.org/wikipedia/commons/f/f4/The_Scream.jpg",
+        "Mosaic": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Modern_mosaic.jpg/1200px-Modern_mosaic.jpg",
+        "Picasso": "https://upload.wikimedia.org/wikipedia/en/thumb/4/48/Picasso_Grand_Nu_au_Fauteuil_Rouge.jpg/220px-Picasso_Grand_Nu_au_Fauteuil_Rouge.jpg"
+    }
+    
+    selected_preset = st.selectbox("Or select a famous masterpiece style:", ["None"] + list(presets.keys()))
+
+    # --- WORKSPACE ---
     col1, col2 = st.columns(2)
 
     with col1:
-        # Reverted back to Subject Image
-        content_file = st.file_uploader("🖼️ Subject Image", type=["jpg", "png", "jpeg"])
+        st.markdown('<p class="big-label">🖼️ Subject Image</p>', unsafe_allow_html=True)
+        content_file = st.file_uploader("", type=["jpg", "png", "jpeg"], key="content")
         if content_file:
             content_img = Image.open(content_file).convert("RGB")
             st.image(content_img, use_column_width=True)
 
     with col2:
-        # Reverted back to Artistic Style
-        style_file = st.file_uploader("🎨 Artistic Style", type=["jpg", "png", "jpeg"])
+        st.markdown('<p class="big-label">🎨 Artistic Style</p>', unsafe_allow_html=True)
+        style_file = st.file_uploader("", type=["jpg", "png", "jpeg"], key="style")
+        
+        # Logic for Style (Upload or Preset)
+        final_style_img = None
         if style_file:
-            style_img = Image.open(style_file).convert("RGB")
-            st.image(style_img, use_column_width=True)
+            final_style_img = Image.open(style_file).convert("RGB")
+            st.image(final_style_img, use_column_width=True)
+        elif selected_preset != "None":
+            final_style_img = load_img_from_url(presets[selected_preset])
+            st.image(final_style_img, caption=f"Preset: {selected_preset}", use_column_width=True)
 
-    if content_file and style_file:
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🖌️ Generate Masterpiece"):
-            with st.status("🎨 Mixing colors and applying AI brushstrokes...", expanded=True):
+    # --- GENERATION ---
+    if content_file and final_style_img:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        if st.button("✨ START ARTISTIC TRANSFORMATION"):
+            with st.status("🔮 AI is analyzing textures and colors...", expanded=True) as status:
                 model = get_model()
-                c_tensor = load_and_process_image(content_img)
-                s_tensor = load_and_process_image(style_img)
+                c_tensor = preprocess(content_img)
+                s_tensor = preprocess(final_style_img)
 
                 s_out = model(s_tensor)
                 s_feats = [gram_matrix(out) for out in s_out[:len(STYLE_LAYERS)]]
@@ -173,19 +185,31 @@ def main():
                 gen_img = tf.Variable(c_tensor, dtype=tf.float32)
                 opt = tf.optimizers.Adam(learning_rate=5.0)
 
-                for i in range(101):
+                for i in range(iterations + 1):
                     with tf.GradientTape() as tape:
                         outputs = model(gen_img)
-                        s_loss = tf.add_n([tf.reduce_mean((gram_matrix(outputs[i]) - s_feats[i])**2) for i in range(len(STYLE_LAYERS))])
-                        c_loss = tf.add_n([tf.reduce_mean((outputs[len(STYLE_LAYERS)+i] - c_feats[i])**2) for i in range(len(CONTENT_LAYERS))])
-                        total_loss = (1e-2 * s_loss) + (1e4 * c_loss)
+                        sl = tf.add_n([tf.reduce_mean((gram_matrix(outputs[i]) - s_feats[i])**2) for i in range(len(STYLE_LAYERS))])
+                        cl = tf.add_n([tf.reduce_mean((outputs[len(STYLE_LAYERS)+i] - c_feats[i])**2) for i in range(len(CONTENT_LAYERS))])
+                        loss = (s_weight * sl) + (1e4 * cl)
                     
-                    grad = tape.gradient(total_loss, gen_img)
+                    grad = tape.gradient(loss, gen_img)
                     opt.apply_gradients([(grad, gen_img)])
+                    if i % 10 == 0:
+                        st.write(f"Refining brushstrokes: {i}/{iterations}")
                 
-            final_image = deprocess_image(gen_img)
-            st.markdown("<div style='text-align:center; padding-top:40px;'><h1>Final Masterpiece</h1></div>", unsafe_allow_html=True)
-            st.image(final_image, use_column_width=True)
+                status.update(label="✅ Transformation Complete!", state="complete")
+
+            final_art = deprocess(gen_img)
+            
+            # Show Result
+            st.markdown("<div style='text-align:center; padding:40px;'><h1>Your Masterpiece</h1></div>", unsafe_allow_html=True)
+            st.image(final_art, use_column_width=True)
+            
+            # Download Button
+            res_pil = Image.fromarray(final_art)
+            res_pil.save("masterpiece.png")
+            with open("masterpiece.png", "rb") as f:
+                st.download_button("📥 SAVE TO GALLERY", f, "neural_artwork.png", "image/png")
 
 if __name__ == "__main__":
     main()
