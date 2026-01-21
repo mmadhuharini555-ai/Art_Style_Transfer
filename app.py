@@ -8,14 +8,14 @@ from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import Model
 
 # -------------------------------
-# 🎨 SAKURA UI & RADIANT STYLING
+# 🎨 UI & SAKURA STYLING
 # -------------------------------
 def apply_ui_design():
     bg_img = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1920"
     
     st.markdown(f"""
     <style>
-        /* Lightened Background Overlay (from 0.9 to 0.6) */
+        /* Lightened Background */
         .stApp {{
             background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("{bg_img}");
             background-size: cover;
@@ -34,7 +34,7 @@ def apply_ui_design():
             filter: drop-shadow(0 0 10px rgba(0, 198, 255, 0.5));
         }}
 
-        /* SAKURA ANIMATION */
+        /* Sakura Animation */
         .sakura {{
             position: fixed; top: -10%; z-index: 999;
             color: #ffb7c5; font-size: 25px;
@@ -46,39 +46,44 @@ def apply_ui_design():
             100% {{ transform: translateY(110vh) rotate(360deg) translateX(100px); opacity: 0; }}
         }}
 
-        /* BUTTONS VISIBILITY FIX */
-        /* Forces labels and button text to be bold and white always */
-        .stButton>button, .stDownloadButton>button, label, p, span {{
-            color: white !important;
-            font-weight: 800 !important;
-            opacity: 1 !important;
+        /* UPLOADER TEXT VISIBILITY FIX */
+        /* Targets the 'Drag and drop file here' text */
+        [data-testid="stFileUploadDropzone"] div {{
+            color: #000000 !important;
+            font-weight: 700 !important;
         }}
-
-        /* Fix specifically for the "Browse files" button interior */
-        [data-testid="stFileUploadDropzone"] button {{
-            background-color: #00c6ff !important;
-            color: black !important;
-        }}
+        
+        /* Targets the 'Browse files' button text */
         [data-testid="stFileUploadDropzone"] button span {{
-            color: black !important;
+            color: #000000 !important;
+            font-weight: 800 !important;
         }}
 
-        /* Gradient Paint Button */
+        /* Targets the 'Limit 200MB' small text */
+        [data-testid="stFileUploadDropzone"] small {{
+            color: #333333 !important;
+            font-weight: 600 !important;
+        }}
+
+        /* Radiant Paint Masterpiece Button */
         .stButton>button {{
             background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
+            color: white !important;
+            font-weight: 800 !important;
             border-radius: 12px !important;
             border: none !important;
             height: 55px;
             width: 100%;
         }}
 
-        /* Radiant Gradient Download Button */
+        /* Radiant Download Button */
         .stDownloadButton>button {{
             background: linear-gradient(45deg, #f781f3, #ee0979) !important;
+            color: white !important;
+            font-weight: 800 !important;
             border-radius: 12px !important;
             border: none !important;
             margin-top: 10px;
-            padding: 10px 20px !important;
         }}
 
         .big-label {{
@@ -86,17 +91,14 @@ def apply_ui_design():
             font-weight: 800;
             color: #00c6ff;
             text-align: center;
-            margin-bottom: 10px;
         }}
 
-        /* Sidebar Glassmorphism */
         [data-testid="stSidebar"] {{
             background: rgba(0, 0, 0, 0.7) !important;
             border-right: 2px solid #ee0979;
         }}
     </style>
 
-    <!-- Falling Sakura petals -->
     <div class="sakura" style="left:10%; animation-duration:10s;">🌸</div>
     <div class="sakura" style="left:25%; animation-duration:15s; animation-delay:2s;">🌸</div>
     <div class="sakura" style="left:45%; animation-duration:12s; animation-delay:4s;">🌸</div>
@@ -127,7 +129,7 @@ def train_step(gen_img, s_targets, c_targets, model, opt):
         outputs = model(gen_img)
         sl = tf.add_n([tf.reduce_mean((gram_matrix(outputs[i]) - s_targets[i])**2) for i in range(5)])
         cl = tf.add_n([tf.reduce_mean((outputs[5+i] - c_targets[i])**2) for i in range(1)])
-        loss = (1e1 * sl) + (1e4 * cl) # High style intensity
+        loss = (1e1 * sl) + (1e4 * cl) 
     grad = tape.gradient(loss, gen_img)
     opt.apply_gradients([(grad, gen_img)])
     gen_img.assign(tf.clip_by_value(gen_img, -128, 128))
@@ -165,7 +167,7 @@ def main():
 
     if c_file and s_file:
         if st.button("✨ PAINT MASTERPIECE"):
-            with st.status("🌸 Creating masterpiece at light speed..."):
+            with st.status("🌸 Creating masterpiece..."):
                 model = get_vgg_model()
                 c_img = Image.open(c_file).convert("RGB").resize((IMG_SIZE, IMG_SIZE))
                 s_img = Image.open(s_file).convert("RGB").resize((IMG_SIZE, IMG_SIZE))
@@ -179,7 +181,7 @@ def main():
                 gen_img = tf.Variable(c_arr, dtype=tf.float32)
                 opt = tf.optimizers.Adam(learning_rate=20.0)
 
-                for _ in range(25): # Optimized iterations
+                for _ in range(25): 
                     train_step(gen_img, s_targets, c_targets, model, opt)
             
             img = gen_img.numpy().reshape((IMG_SIZE, IMG_SIZE, 3))
@@ -188,11 +190,9 @@ def main():
             
             st.markdown("<div style='text-align:center;'><h2>Transformation Complete!</h2></div>", unsafe_allow_html=True)
             
-            # Minimized Display
             m1, m2, m3 = st.columns([1, 1, 1])
             with m2:
                 st.image(final_art, width=380)
-                # Radiant Gradient Download Button
                 buf = io.BytesIO()
                 Image.fromarray(final_art).save(buf, format="PNG")
                 st.download_button(label="📥 DOWNLOAD MASTERPIECE", data=buf.getvalue(), file_name="masterpiece.png", mime="image/png")
