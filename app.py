@@ -7,15 +7,15 @@ from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import Model
 
 # -------------------------------
-# 🎨 UI & DECORATION CONFIGURATION
+# 🎨 DYNAMIC ART STUDIO UI
 # -------------------------------
-def apply_art_studio_theme():
-    bg_img_url = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+def apply_dynamic_theme():
+    bg_img = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
 
     st.markdown(f"""
     <style>
         .stApp {{
-            background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url("{bg_img_url}");
+            background-image: linear-gradient(rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.88)), url("{bg_img}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -25,71 +25,76 @@ def apply_art_studio_theme():
         .main-title {{
             font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            font-size: 80px !important;
+            font-size: 70px !important;
             text-align: center;
-            background: linear-gradient(to right, #00f2fe, #4facfe, #f1c40f);
+            background: linear-gradient(45deg, #00f2fe, #4facfe, #f1c40f, #ff0080);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0px 0px 15px rgba(79, 172, 254, 0.5));
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }}
 
-        /* Massive Labels */
-        .big-label {{
-            font-size: 38px !important;
-            font-weight: 800 !important;
-            color: #4facfe !important;
-            text-align: center;
-            margin-bottom: 15px;
-            text-transform: uppercase;
+        /* Left Inspiration Gallery */
+        .inspiration-box {{
+            border-left: 3px solid #4facfe;
+            padding-left: 15px;
+            margin-bottom: 25px;
         }}
-
-        /* Artistic Charms (Left Side) */
-        .charm {{
-            font-size: 40px;
-            margin-bottom: 20px;
-            text-align: center;
-            filter: drop-shadow(0 0 10px #f1c40f);
-            animation: float 3s ease-in-out infinite;
-        }}
-        
-        @keyframes float {{
-            0% {{ transform: translateY(0px); }}
-            50% {{ transform: translateY(-15px); }}
-            100% {{ transform: translateY(0px); }}
-        }}
-
-        /* Inspiration Gallery (Right Side) */
-        .gallery-card {{
-            background: rgba(255, 255, 255, 0.05);
+        .insp-img {{
             border-radius: 10px;
-            padding: 5px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: 0.3s;
+        }}
+        .insp-img:hover {{ transform: scale(1.05); border-color: #f1c40f; }}
+
+        /* Smaller Floating Gradient Charms */
+        .charm {{
+            position: fixed;
+            font-size: 25px;
+            z-index: -1;
+            background: linear-gradient(45deg, #f1c40f, #ff0080);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: move 10s linear infinite;
+            opacity: 0.6;
+        }}
+
+        @keyframes move {{
+            0% {{ transform: translate(0, 0) rotate(0deg); }}
+            25% {{ transform: translate(100px, 200px) rotate(90deg); }}
+            50% {{ transform: translate(200px, 50px) rotate(180deg); }}
+            75% {{ transform: translate(-50px, 150px) rotate(270deg); }}
+            100% {{ transform: translate(0, 0) rotate(360deg); }}
+        }}
+
+        /* Workspace Styling */
+        .big-label {{
+            font-size: 30px !important;
+            font-weight: 800;
+            color: #4facfe;
             text-align: center;
-        }}
-        
-        .gallery-text {{
-            font-size: 12px;
-            color: #bdc3c7;
-            margin-top: 5px;
+            margin-bottom: 10px;
         }}
 
-        /* Uploaders */
         [data-testid="stFileUploader"] {{
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px dashed rgba(79, 172, 254, 0.3);
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed #4facfe;
+            border-radius: 15px;
         }}
 
-        /* Hide Sidebar and Menus */
-        [data-testid="stSidebar"] {{display: none;}}
         #MainMenu, footer, header {{visibility: hidden;}}
     </style>
+
+    <!-- Floating Charms -->
+    <div class="charm" style="top:10%; left:5%; animation-duration: 15s;">🎨</div>
+    <div class="charm" style="top:40%; left:85%; animation-duration: 20s;">✨</div>
+    <div class="charm" style="top:70%; left:15%; animation-duration: 12s;">🖌️</div>
+    <div class="charm" style="top:20%; left:70%; animation-duration: 18s;">🌈</div>
+    <div class="charm" style="top:80%; left:60%; animation-duration: 25s;">💎</div>
     """, unsafe_allow_html=True)
 
 # -------------------------------
-# 🧠 AI ENGINE
+# 🧠 OPTIMIZED AI ENGINE
 # -------------------------------
 IMG_SIZE = 224
 STYLE_LAYERS = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
@@ -104,7 +109,7 @@ def get_model():
 
 def preprocess(img):
     img = img.resize((IMG_SIZE, IMG_SIZE))
-    img = tf.keras.preprocessing.image.img_to_array(img)
+    img = img_to_array(img)
     img = np.expand_dims(img, axis=0)
     return tf.keras.applications.vgg19.preprocess_input(img)
 
@@ -121,89 +126,80 @@ def gram_matrix(input_tensor):
     return result / num_locations
 
 # -------------------------------
-# 🚀 APP UI
+# 🚀 MAIN APPLICATION
 # -------------------------------
 def main():
-    st.set_page_config(page_title="Neural Art Gallery", layout="wide")
-    apply_art_studio_theme()
+    st.set_page_config(page_title="Neural Art Pro", layout="wide")
+    apply_dynamic_theme()
 
     st.markdown('<h1 class="main-title">Neural Art Gallery</h1>', unsafe_allow_html=True)
 
-    # LAYOUT: Charms | Main Workspace | Inspiration Gallery
-    col_charms, col_main, col_gallery = st.columns([0.8, 7, 2])
+    # LAYOUT: Inspirations (Left) | Main Workspace (Right)
+    col_insp, col_work = st.columns([1.5, 6])
 
-    # 1. Left Charms
-    with col_charms:
-        st.markdown('<div class="charm">🎨</div>', unsafe_allow_html=True)
-        st.markdown('<div class="charm">✨</div>', unsafe_allow_html=True)
-        st.markdown('<div class="charm">🖌️</div>', unsafe_allow_html=True)
-        st.markdown('<div class="charm">💎</div>', unsafe_allow_html=True)
-        st.markdown('<div class="charm">🌈</div>', unsafe_allow_html=True)
+    with col_insp:
+        st.markdown('<p style="color:#f1c40f; font-weight:bold; font-size:18px;">INSPIRATIONS</p>', unsafe_allow_html=True)
+        styles = [
+            ("Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/200px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
+            ("The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/200px-The_Scream.jpg"),
+            ("Mosaic Art", "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Modern_mosaic.jpg/200px-Modern_mosaic.jpg"),
+            ("Oil Abstract", "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=200")
+        ]
+        for name, url in styles:
+            st.markdown(f'<div class="inspiration-box"><img src="{url}" class="insp-img"><br><small>{name}</small></div>', unsafe_allow_html=True)
 
-    # 2. Main Workspace
-    with col_main:
-        m_col1, m_col2 = st.columns(2)
-        with m_col1:
-            st.markdown('<p class="big-label">🖼️ Subject Image</p>', unsafe_allow_html=True)
-            content_file = st.file_uploader("", type=["jpg", "png", "jpeg"], key="c")
-            if content_file:
-                content_img = Image.open(content_file).convert("RGB")
-                st.image(content_img, use_column_width=True)
+    with col_work:
+        w_col1, w_col2 = st.columns(2)
+        with w_col1:
+            st.markdown('<p class="big-label">🖼️ Subject</p>', unsafe_allow_html=True)
+            c_file = st.file_uploader("Upload content", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+            if c_file:
+                c_img = Image.open(c_file).convert("RGB")
+                st.image(c_img, use_column_width=True)
 
-        with m_col2:
-            st.markdown('<p class="big-label">🎨 Artistic Style</p>', unsafe_allow_html=True)
-            style_file = st.file_uploader("", type=["jpg", "png", "jpeg"], key="s")
-            if style_file:
-                style_img = Image.open(style_file).convert("RGB")
-                st.image(style_img, use_column_width=True)
+        with w_col2:
+            st.markdown('<p class="big-label">🎨 Style</p>', unsafe_allow_html=True)
+            s_file = st.file_uploader("Upload style", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+            if s_file:
+                s_img = Image.open(s_file).convert("RGB")
+                st.image(s_img, use_column_width=True)
 
-        if content_file and style_file:
+        if c_file and s_file:
             st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("✨ CREATE MASTERPIECE"):
-                with st.status("🎨 Applying High-Intensity Style..."):
+            if st.button("✨ PAINT MASTERPIECE"):
+                with st.status("🔮 Transforming into Art... (Fast Mode)"):
                     model = get_model()
-                    c_tensor = preprocess(content_img)
-                    s_tensor = preprocess(style_img)
+                    c_tensor = preprocess(c_img)
+                    s_tensor = preprocess(s_img)
                     
                     s_out = model(s_tensor)
                     s_feats = [gram_matrix(out) for out in s_out[:len(STYLE_LAYERS)]]
                     c_feats = model(c_tensor)[len(STYLE_LAYERS):]
 
                     gen_img = tf.Variable(c_tensor, dtype=tf.float32)
-                    opt = tf.optimizers.Adam(learning_rate=5.0)
+                    # Increased Learning Rate for faster convergence
+                    opt = tf.optimizers.Adam(learning_rate=10.0)
 
-                    # Hardcoded High Intensity Style
-                    for i in range(151):
+                    # Faster loop: only 70 iterations
+                    for i in range(71):
                         with tf.GradientTape() as tape:
                             outs = model(gen_img)
+                            # Heavy Style Weight (1.0) vs Content Weight (1e4)
+                            # This ensures the style is VERY visible
                             sl = tf.add_n([tf.reduce_mean((gram_matrix(outs[i]) - s_feats[i])**2) for i in range(len(STYLE_LAYERS))])
                             cl = tf.add_n([tf.reduce_mean((outs[len(STYLE_LAYERS)+i] - c_feats[i])**2) for i in range(len(CONTENT_LAYERS))])
-                            loss = (1e-1 * sl) + (1e4 * cl) # 1e-1 is High Style Intensity
+                            loss = (1e0 * sl) + (1e4 * cl) 
                         
                         grad = tape.gradient(loss, gen_img)
                         opt.apply_gradients([(grad, gen_img)])
                 
                 final_art = deprocess(gen_img)
-                st.markdown("<div style='text-align:center; padding:40px;'><h1>Final Masterpiece</h1></div>", unsafe_allow_html=True)
-                st.image(final_art, use_column_width=True)
-
-    # 3. Right Inspiration Gallery
-    with col_gallery:
-        st.markdown('<p style="color:#f1c40f; font-weight:bold; text-align:center;">STYLIZATION TIPS</p>', unsafe_allow_html=True)
-        
-        gallery_items = [
-            ("Van Gogh", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
-            ("The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
-            ("Abstract", "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Modern_mosaic.jpg/300px-Modern_mosaic.jpg")
-        ]
-        
-        for name, url in gallery_items:
-            st.markdown(f'''
-                <div class="gallery-card">
-                    <img src="{url}" width="100%" style="border-radius:5px;">
-                    <div class="gallery-text">{name}</div>
-                </div>
-            ''', unsafe_allow_html=True)
-
+                st.markdown("<div style='text-align:center; padding-top:20px;'><p class='big-label' style='color:#f1c40f;'>MASTERPIECE COMPLETE</p></div>", unsafe_allow_html=True)
+                
+                # MINIMIZED IMAGE: Controlled width
+                col_left, col_mid, col_right = st.columns([1, 2, 1])
+                with col_mid:
+                    st.image(final_art, width=400, caption="Minimized High-Intensity Output")
+                    
 if __name__ == "__main__":
     main()
