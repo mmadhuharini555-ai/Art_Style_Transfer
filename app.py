@@ -144,12 +144,12 @@ def main():
             ("Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
             ("The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
             ("Mosaic Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=300"),
-            ("Oil Abstraction", "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=300")
+            ("Oil Abstraction", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=300")
         ]
         for name, url in styles_ref:
             st.image(url, caption=name, use_column_width=True)
 
-    st.markdown('<h1 class="main-title">Neural Art Gallery</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title">Alchemy of Styles</h1>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
