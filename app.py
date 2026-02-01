@@ -2,7 +2,7 @@ import streamlit as st
 import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
-from PIL import Image, ImageEnhance, ImageDraw, ImageFont
+from PIL import Image, ImageEnhance, ImageDraw
 import io
 
 # -------------------------------
@@ -39,18 +39,16 @@ def apply_ui_design():
             background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
             color: white !important; font-weight: 800 !important;
             border-radius: 12px !important; border: none !important; height: 55px; width: 100%;
+            margin-top: 20px;
         }}
         .stDownloadButton>button {{
             background: linear-gradient(45deg, #f781f3, #ee0979) !important;
             color: white !important; font-weight: 800 !important;
             border-radius: 12px !important; border: none !important;
         }}
-        .big-label {{ font-size: 32px !important; font-weight: 800; color: #00c6ff; text-align: center; }}
+        .big-label {{ font-size: 28px !important; font-weight: 800; color: #00c6ff; text-align: center; margin-bottom: 10px; }}
         [data-testid="stSidebar"] {{ background: rgba(0, 0, 0, 0.85) !important; border-right: 2px solid #ee0979; }}
-        .control-panel {{
-            background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 15px;
-            border: 1px solid #ee0979; margin-top: 20px;
-        }}
+        .streamlit-expanderHeader {{ color: #ee0979 !important; font-weight: 800 !important; font-size: 1.1rem !important; }}
     </style>
     <div class="sakura" style="left:10%; animation-duration:10s;">🌸</div>
     <div class="sakura" style="left:25%; animation-duration:15s; animation-delay:2s;">🌸</div>
@@ -81,9 +79,28 @@ def main():
     if 'history' not in st.session_state:
         st.session_state.history = []
 
+    # --- 🏰 SIDEBAR MENU (ALL SETTINGS MOVED HERE) ---
     with st.sidebar:
         st.markdown("<h1 style='color:#ee0979; text-align:center;'>✨ Studio Menu</h1>", unsafe_allow_html=True)
         
+        # 1. STUDIO SETTINGS (Moved from Main Page)
+        with st.expander("🛠️ Studio Settings ⚙️", expanded=True):
+            st.markdown("<h4 style='color:#00c6ff;'>🎚️ Style Control</h4>", unsafe_allow_html=True)
+            strength = st.slider("✨ Alchemy Strength", 0.0, 1.0, 0.8)
+            res_mode = st.radio("📐 Resolution", ["Fast Draft (512px)", "Gallery Print (1024px)"], horizontal=True)
+            
+            st.markdown("<hr style='border:0.5px solid #333'>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#00c6ff;'>🌓 Darkroom</h4>", unsafe_allow_html=True)
+            bright = st.slider("☀️ Brightness", 0.5, 2.0, 1.0)
+            contr = st.slider("🌓 Contrast", 0.5, 2.0, 1.0)
+            sharp = st.slider("🔪 Sharpness", 0.5, 3.0, 1.0)
+
+            st.markdown("<hr style='border:0.5px solid #333'>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#00c6ff;'>✒️ Artist Pro</h4>", unsafe_allow_html=True)
+            signature = st.text_input("🖋️ Signature Name", "")
+            sig_color = st.color_picker("🎨 Color", "#00f2ff")
+
+        # 2. GALLERY INSPIRATIONS
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
             styles_ref = [
                 ("Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
@@ -94,71 +111,76 @@ def main():
             for name, url in styles_ref:
                 st.image(url, caption=name, use_column_width=True)
 
+        # 3. HISTORY VAULT
         with st.expander("🏺 History Vault 📜", expanded=False):
             if not st.session_state.history:
                 st.info("Vault is empty...")
             else:
                 for idx, item in enumerate(st.session_state.history):
                     st.image(item['masterpiece'], caption=f"Creation #{len(st.session_state.history) - idx}", use_column_width=True)
+                    buf = io.BytesIO()
+                    item['masterpiece'].save(buf, format="PNG")
+                    st.download_button(
+                        label=f"📥 Download #{len(st.session_state.history) - idx}",
+                        data=buf.getvalue(),
+                        file_name=f"vault_art_{idx}.png",
+                        mime="image/png",
+                        key=f"hist_dl_{idx}",
+                        use_container_width=True
+                    )
                     st.markdown("<hr style='border: 0.5px solid #00c6ff;'>", unsafe_allow_html=True)
 
+    # --- 🚀 MAIN APP AREA ---
     st.markdown('<h1 class="main-title">Alchemy of Styles</h1>', unsafe_allow_html=True)
 
-    # --- 📸 INPUT SECTION ---
-    c_col, s_col1, s_col2 = st.columns([2, 1, 1])
+    # 📸 EQUAL 3-COLUMN UPLOADER
+    c_col, s_col1, s_col2 = st.columns([1, 1, 1])
     with c_col:
         st.markdown('<p class="big-label">🖼️ Subject Image</p>', unsafe_allow_html=True)
         c_file = st.file_uploader("C", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+        if c_file: st.image(c_file, use_column_width=True)
+        
     with s_col1:
-        st.markdown('<p class="big-label" style="font-size:22px !important;">🎨 Artistic Style A</p>', unsafe_allow_html=True)
+        st.markdown('<p class="big-label">🎨 Style A</p>', unsafe_allow_html=True)
         s_file1 = st.file_uploader("S1", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+        if s_file1: st.image(s_file1, use_column_width=True)
+
     with s_col2:
-        st.markdown('<p class="big-label" style="font-size:22px !important;">🎨 Artistic Style B</p>', unsafe_allow_html=True)
+        st.markdown('<p class="big-label">🎨 Style B</p>', unsafe_allow_html=True)
         s_file2 = st.file_uploader("S2", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+        if s_file2: st.image(s_file2, use_column_width=True)
 
+    # Dynamic Fusion logic for sidebar
+    fusion = 0.5
+    if s_file1 and s_file2:
+        with st.sidebar:
+            with st.expander("🛠️ Studio Settings ⚙️"):
+                fusion = st.slider("🔗 Style Fusion (A vs B)", 0.0, 1.0, 0.5)
+
+    # PAINT BUTTON (Main Area)
     if c_file and (s_file1 or s_file2):
-        # --- 🛠️ ADVANCED SETTINGS PANEL ---
-        st.markdown("<div class='control-panel'>", unsafe_allow_html=True)
-        t1, t2, t3 = st.tabs(["🎚️ Style Control", "🌓 Darkroom", "✒️ Artist Pro"])
-        
-        with t1:
-            col_a, col_b = st.columns(2)
-            with col_a:
-                strength = st.slider("✨ Alchemy Strength", 0.0, 1.0, 0.8)
-                res_mode = st.radio("📐 Resolution", ["Fast Draft (512px)", "Gallery Print (1024px)"], horizontal=True)
-            with col_b:
-                fusion = st.slider("🔗 Style Fusion (A vs B)", 0.0, 1.0, 0.5) if (s_file1 and s_file2) else st.write("Upload two styles to fuse.")
-        
-        with t2:
-            d_col1, d_col2, d_col3 = st.columns(3)
-            bright = d_col1.slider("☀️ Brightness", 0.5, 2.0, 1.0)
-            contr = d_col2.slider("🌓 Contrast", 0.5, 2.0, 1.0)
-            sharp = d_col3.slider("🔪 Sharpness", 0.5, 3.0, 1.0)
-
-        with t3:
-            signature = st.text_input("🖋️ Add Artist Signature (Optional)", "")
-            sig_color = st.color_picker("🎨 Signature Color", "#00f2ff")
-        st.markdown("</div>", unsafe_allow_html=True)
-
         if st.button("✨ PAINT MASTERPIECE"):
             with st.status("🌸 Transmuting Art...", expanded=True):
                 model = load_fast_model()
                 target_dim = 512 if "Fast" in res_mode else 1024
                 
-                # 1. PREP CONTENT (Darkroom)
+                # 1. PREP CONTENT
                 content_pil = Image.open(c_file).convert("RGB")
                 content_pil = ImageEnhance.Brightness(content_pil).enhance(bright)
                 content_pil = ImageEnhance.Contrast(content_pil).enhance(contr)
                 content_pil = ImageEnhance.Sharpness(content_pil).enhance(sharp)
                 content_tensor = prep_img_for_model(content_pil, target_dim)
 
-                # 2. PREP STYLE (Fusion)
+                # 2. PREP STYLE
                 if s_file1 and s_file2:
                     s1 = Image.open(s_file1).convert("RGB").resize((512, 512))
                     s2 = Image.open(s_file2).convert("RGB").resize((512, 512))
                     style_pil = Image.blend(s1, s2, fusion)
+                elif s_file1:
+                    style_pil = Image.open(s_file1).convert("RGB")
                 else:
-                    style_pil = Image.open(s_file1 if s_file1 else s_file2).convert("RGB")
+                    style_pil = Image.open(s_file2).convert("RGB")
+                
                 style_tensor = prep_img_for_model(style_pil, 512)
 
                 # 3. RUN AI
@@ -166,13 +188,12 @@ def main():
                 stylized_np = np.array(outputs[0][0] * 255).astype(np.uint8)
                 stylized_pil = Image.fromarray(stylized_np)
 
-                # 4. ALCHEMY BLEND (Strength)
+                # 4. ALCHEMY BLEND
                 final_art = Image.blend(content_pil.resize(stylized_pil.size), stylized_pil, strength)
 
-                # 5. ADD SIGNATURE
+                # 5. SIGNATURE
                 if signature:
                     draw = ImageDraw.Draw(final_art)
-                    # Basic font logic
                     draw.text((20, final_art.size[1]-50), signature, fill=sig_color)
 
                 st.session_state.history.insert(0, {"masterpiece": final_art})
@@ -190,4 +211,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
