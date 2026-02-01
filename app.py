@@ -111,7 +111,7 @@ def main():
 
     if c_file and s_file:
         if st.button("✨ PAINT MASTERPIECE"):
-            with st.status("🌸 Processing High-Quality Art...", expanded=True):
+            with st.status("🌸 Creating Masterpiece...", expanded=True):
                 model = load_fast_model()
                 
                 # Preprocess (Max resolution set to 1024 for high quality)
@@ -136,3 +136,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
