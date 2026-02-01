@@ -4,7 +4,6 @@ import tensorflow_hub as hub
 import numpy as np
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
 import io
-import os
 
 # -------------------------------
 # 🎨 UI & SAKURA STYLING
@@ -78,38 +77,42 @@ def prep_img_for_model(img, target_dim):
     img_array = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
     return tf.constant(img_array)
 
-def add_artist_signature(img, name, color, font_style):
-    if not name: return img
+def apply_signature_v2(img, text, color, font_style, scale, position):
+    if not text: return img
     
     draw = ImageDraw.Draw(img)
-    # Scale font size based on image height (roughly 6% of image height)
-    font_size = int(img.size[1] * 0.06)
+    # New scaling logic based on user input
+    font_size = int(img.size[1] * (scale / 100))
     
     try:
-        # Attempt to load common system fonts based on selection
-        if font_style == "Classic Serif":
-            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-BoldItalic.ttf", font_size)
-        elif font_style == "Elegant Script":
-            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf", font_size)
-        elif font_style == "Tech Mono":
-            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf", font_size)
-        else: # Modern Sans
-            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", font_size)
+        paths = ["/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+                 "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]
+        # Selection logic
+        font_path = paths[0]
+        if font_style == "Classic Serif": font_path = "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf"
+        elif font_style == "Tech Mono": font_path = "/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf"
+        
+        font = ImageFont.truetype(font_path, font_size)
     except:
         font = ImageFont.load_default()
 
-    # Calculate position (Bottom Right)
-    bbox = draw.textbbox((0, 0), name, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
+    bbox = draw.textbbox((0, 0), text, font=font)
+    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
     
-    x = img.size[0] - text_width - 40
-    y = img.size[1] - text_height - 60
+    # Position logic
+    margin = 40
+    if position == "Bottom Right": x, y = img.size[0] - w - margin, img.size[1] - h - margin - 20
+    elif position == "Bottom Left": x, y = margin, img.size[1] - h - margin - 20
+    elif position == "Top Right": x, y = img.size[0] - w - margin, margin
+    else: x, y = margin, margin
 
-    # Draw Shadow for visibility
-    draw.text((x+3, y+3), name, font=font, fill=(0,0,0)) 
-    # Draw Main Signature
-    draw.text((x, y), name, font=font, fill=color)
+    # HIGH VISIBILITY GLOW (Draws a border in 8 directions)
+    glow_color = (0, 0, 0) # Black glow for maximum contrast
+    for offset in [(2,2), (-2,-2), (2,-2), (-2,2), (0,2), (0,-2), (2,0), (-2,0)]:
+        draw.text((x + offset[0], y + offset[1]), text, font=font, fill=glow_color)
+
+    # Main text
+    draw.text((x, y), text, font=font, fill=color)
     return img
 
 # -------------------------------
@@ -122,7 +125,6 @@ def main():
     if 'history' not in st.session_state:
         st.session_state.history = []
 
-    # --- 🏰 SIDEBAR MENU ---
     with st.sidebar:
         st.markdown("<h1 style='color:#ee0979; text-align:center;'>✨ Studio Menu</h1>", unsafe_allow_html=True)
         
@@ -141,7 +143,9 @@ def main():
             st.markdown("<h4 style='color:#00c6ff;'>✒️ Artist Pro</h4>", unsafe_allow_html=True)
             signature = st.text_input("🖋️ Signature Name", "")
             sig_color = st.color_picker("🎨 Signature Color", "#00f2ff")
-            font_choice = st.selectbox("📜 Font Style", ["Modern Sans", "Classic Serif", "Elegant Script", "Tech Mono"])
+            font_choice = st.selectbox("📜 Font Style", ["Modern Sans", "Classic Serif", "Tech Mono"])
+            sig_size = st.slider("📏 Signature Size", 3, 15, 7) # New feature
+            sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"]) # New feature
 
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
             styles_ref = [
@@ -161,12 +165,7 @@ def main():
                     st.image(item['masterpiece'], caption=f"Creation #{len(st.session_state.history) - idx}", use_column_width=True)
                     buf = io.BytesIO()
                     item['masterpiece'].save(buf, format="PNG")
-                    st.download_button(
-                        label=f"📥 Download #{len(st.session_state.history) - idx}",
-                        data=buf.getvalue(), file_name=f"vault_art_{idx}.png",
-                        mime="image/png", key=f"hist_dl_{idx}", use_container_width=True
-                    )
-                    st.markdown("<hr style='border: 0.5px solid #00c6ff;'>", unsafe_allow_html=True)
+                    st.download_button(label=f"📥 Download #{len(st.session_state.history) - idx}", data=buf.getvalue(), file_name=f"vault_art_{idx}.png", mime="image/png", key=f"hist_dl_{idx}", use_container_width=True)
 
     st.markdown('<h1 class="main-title">Alchemy of Styles</h1>', unsafe_allow_html=True)
 
@@ -222,8 +221,8 @@ def main():
 
                 final_art = Image.blend(content_pil.resize(stylized_pil.size), stylized_pil, strength)
 
-                # APPLY THE UPDATED SIGNATURE LOGIC
-                final_art = add_artist_signature(final_art, signature, sig_color, font_choice)
+                # APPLY THE NEW HIGH-CONTRAST SIGNATURE V2
+                final_art = apply_signature_v2(final_art, signature, sig_color, font_choice, sig_size, sig_pos)
 
                 st.session_state.history.insert(0, {"masterpiece": final_art})
             
