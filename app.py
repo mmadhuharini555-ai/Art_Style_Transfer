@@ -1,12 +1,12 @@
 import streamlit as st
 import tensorflow as tf
-import tensorflow_hub as hub  # Required for high-speed quality
+import tensorflow_hub as hub
 import numpy as np
 from PIL import Image
 import io
 
 # -------------------------------
-# 🎨 UI & SAKURA STYLING (UNCHANGED)
+# 🎨 UI & SAKURA STYLING (KEEPING YOUR DESIGN)
 # -------------------------------
 def apply_ui_design():
     bg_img = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1920"
@@ -67,14 +67,16 @@ def apply_ui_design():
 # 🧠 AI ENGINE (ULTRA SPEED & HIGH QUALITY)
 # -------------------------------
 @st.cache_resource
-def load_model():
-    # This model is specifically designed for real-time high-quality style transfer
+def load_fast_model():
+    # Loading the high-quality Arbitrary Image Stylization model from TF Hub
     return hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
 
-def preprocess_image(image_file):
+def load_and_prep_img(image_file, target_dim=512):
     img = Image.open(image_file).convert('RGB')
+    # Resize for high quality but keeping speed in mind
+    img.thumbnail((target_dim, target_dim))
     img = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
-    return img
+    return tf.constant(img)
 
 # -------------------------------
 # 🚀 APP INTERFACE
@@ -99,34 +101,33 @@ def main():
     c1, c2 = st.columns(2)
     with c1:
         st.markdown('<p class="big-label">🖼️ Subject Image</p>', unsafe_allow_html=True)
-        c_file = st.file_uploader("C", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
-        if c_file: st.image(Image.open(c_file), use_column_width=True)
+        c_file = st.file_uploader("Upload Content", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+        if c_file: st.image(c_file, use_column_width=True)
 
     with c2:
         st.markdown('<p class="big-label">🎨 Artistic Style</p>', unsafe_allow_html=True)
-        s_file = st.file_uploader("S", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
-        if s_file: st.image(Image.open(s_file), use_column_width=True)
+        s_file = st.file_uploader("Upload Style", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+        if s_file: st.image(s_file, use_column_width=True)
 
     if c_file and s_file:
         if st.button("✨ PAINT MASTERPIECE"):
-            with st.status("🌸 Creating masterpiece..."):
-                # Load the high-speed model
-                model = load_model()
+            with st.status("🌸 Processing High-Quality Art...", expanded=True):
+                model = load_fast_model()
                 
-                # Preprocess images
-                content_img = preprocess_image(c_file)
-                style_img = preprocess_image(s_file)
+                # Preprocess (Max resolution set to 1024 for high quality)
+                content_img = load_and_prep_img(c_file, target_dim=1024)
+                style_img = load_and_prep_img(s_file, target_dim=512)
                 
-                # Stylize image (takes < 2 seconds)
-                outputs = model(tf.constant(content_img), tf.constant(style_img))
+                # Generate image instantly
+                outputs = model(content_img, style_img)
                 stylized_img = outputs[0]
 
-                # Convert back to displayable image
+                # Convert to viewable format
                 final_art = np.array(stylized_img[0] * 255).astype(np.uint8)
             
             st.markdown("<div style='text-align:center;'><h2>Transformation Complete!</h2></div>", unsafe_allow_html=True)
             
-            m1, m2, m3 = st.columns([1, 1, 1])
+            _, m2, _ = st.columns([1, 2, 1])
             with m2:
                 st.image(final_art, use_column_width=True)
                 buf = io.BytesIO()
