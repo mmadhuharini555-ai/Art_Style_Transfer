@@ -49,6 +49,16 @@ def apply_ui_design():
         .big-label {{ font-size: 28px !important; font-weight: 800; color: #00c6ff; text-align: center; margin-bottom: 10px; }}
         [data-testid="stSidebar"] {{ background: rgba(0, 0, 0, 0.85) !important; border-right: 2px solid #ee0979; }}
         .streamlit-expanderHeader {{ color: #ee0979 !important; font-weight: 800 !important; font-size: 1.1rem !important; }}
+        
+        /* Comparison Text Styles */
+        .comp-label-before {{
+            color: #00c6ff; font-weight: 900; font-size: 30px; text-align: center;
+            text-shadow: 0 0 10px #00c6ff; text-transform: uppercase; margin-bottom: 10px;
+        }}
+        .comp-label-after {{
+            color: #ff00de; font-weight: 900; font-size: 30px; text-align: center;
+            text-shadow: 0 0 15px #ff00de; text-transform: uppercase; margin-bottom: 10px;
+        }}
     </style>
     <div class="sakura" style="left:10%; animation-duration:10s;">🌸</div>
     <div class="sakura" style="left:25%; animation-duration:15s; animation-delay:2s;">🌸</div>
@@ -79,11 +89,10 @@ def main():
     if 'history' not in st.session_state:
         st.session_state.history = []
 
-    # --- 🏰 SIDEBAR MENU (ALL SETTINGS MOVED HERE) ---
+    # --- 🏰 SIDEBAR MENU ---
     with st.sidebar:
         st.markdown("<h1 style='color:#ee0979; text-align:center;'>✨ Studio Menu</h1>", unsafe_allow_html=True)
         
-        # 1. STUDIO SETTINGS (Moved from Main Page)
         with st.expander("🛠️ Studio Settings ⚙️", expanded=True):
             st.markdown("<h4 style='color:#00c6ff;'>🎚️ Style Control</h4>", unsafe_allow_html=True)
             strength = st.slider("✨ Alchemy Strength", 0.0, 1.0, 0.8)
@@ -100,7 +109,6 @@ def main():
             signature = st.text_input("🖋️ Signature Name", "")
             sig_color = st.color_picker("🎨 Color", "#00f2ff")
 
-        # 2. GALLERY INSPIRATIONS
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
             styles_ref = [
                 ("Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
@@ -111,7 +119,6 @@ def main():
             for name, url in styles_ref:
                 st.image(url, caption=name, use_column_width=True)
 
-        # 3. HISTORY VAULT
         with st.expander("🏺 History Vault 📜", expanded=False):
             if not st.session_state.history:
                 st.info("Vault is empty...")
@@ -122,15 +129,11 @@ def main():
                     item['masterpiece'].save(buf, format="PNG")
                     st.download_button(
                         label=f"📥 Download #{len(st.session_state.history) - idx}",
-                        data=buf.getvalue(),
-                        file_name=f"vault_art_{idx}.png",
-                        mime="image/png",
-                        key=f"hist_dl_{idx}",
-                        use_container_width=True
+                        data=buf.getvalue(), file_name=f"vault_art_{idx}.png",
+                        mime="image/png", key=f"hist_dl_{idx}", use_container_width=True
                     )
                     st.markdown("<hr style='border: 0.5px solid #00c6ff;'>", unsafe_allow_html=True)
 
-    # --- 🚀 MAIN APP AREA ---
     st.markdown('<h1 class="main-title">Alchemy of Styles</h1>', unsafe_allow_html=True)
 
     # 📸 EQUAL 3-COLUMN UPLOADER
@@ -150,28 +153,24 @@ def main():
         s_file2 = st.file_uploader("S2", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
         if s_file2: st.image(s_file2, use_column_width=True)
 
-    # Dynamic Fusion logic for sidebar
     fusion = 0.5
     if s_file1 and s_file2:
         with st.sidebar:
             with st.expander("🛠️ Studio Settings ⚙️"):
                 fusion = st.slider("🔗 Style Fusion (A vs B)", 0.0, 1.0, 0.5)
 
-    # PAINT BUTTON (Main Area)
     if c_file and (s_file1 or s_file2):
         if st.button("✨ PAINT MASTERPIECE"):
             with st.status("🌸 Transmuting Art...", expanded=True):
                 model = load_fast_model()
                 target_dim = 512 if "Fast" in res_mode else 1024
                 
-                # 1. PREP CONTENT
                 content_pil = Image.open(c_file).convert("RGB")
                 content_pil = ImageEnhance.Brightness(content_pil).enhance(bright)
                 content_pil = ImageEnhance.Contrast(content_pil).enhance(contr)
                 content_pil = ImageEnhance.Sharpness(content_pil).enhance(sharp)
                 content_tensor = prep_img_for_model(content_pil, target_dim)
 
-                # 2. PREP STYLE
                 if s_file1 and s_file2:
                     s1 = Image.open(s_file1).convert("RGB").resize((512, 512))
                     s2 = Image.open(s_file2).convert("RGB").resize((512, 512))
@@ -183,15 +182,12 @@ def main():
                 
                 style_tensor = prep_img_for_model(style_pil, 512)
 
-                # 3. RUN AI
                 outputs = model(content_tensor, style_tensor)
                 stylized_np = np.array(outputs[0][0] * 255).astype(np.uint8)
                 stylized_pil = Image.fromarray(stylized_np)
 
-                # 4. ALCHEMY BLEND
                 final_art = Image.blend(content_pil.resize(stylized_pil.size), stylized_pil, strength)
 
-                # 5. SIGNATURE
                 if signature:
                     draw = ImageDraw.Draw(final_art)
                     draw.text((20, final_art.size[1]-50), signature, fill=sig_color)
@@ -200,11 +196,15 @@ def main():
             
             st.markdown("<div style='text-align:center;'><h2 style='color: #fff; text-shadow: 0 0 20px #ff00de; font-weight: 900; font-size: 45px;'>🌸 TRANSFORMATION COMPLETE! 🌸</h2></div>", unsafe_allow_html=True)
 
+            # --- THEMATIC BEFORE/AFTER COMPARISON ---
             m_col1, m_col2 = st.columns(2)
             with m_col1:
-                st.image(content_pil, caption="Original Subject", use_column_width=True)
+                st.markdown("<p class='comp-label-before'>🌑 Mundane Essence</p>", unsafe_allow_html=True)
+                st.image(content_pil, use_column_width=True)
             with m_col2:
-                st.image(final_art, caption="Stylized Masterpiece", use_column_width=True)
+                st.markdown("<p class='comp-label-after'>🌟 Alchemy Transmuted</p>", unsafe_allow_html=True)
+                st.image(final_art, use_column_width=True)
+                
                 buf = io.BytesIO()
                 final_art.save(buf, format="PNG")
                 st.download_button("📥 DOWNLOAD MASTERPIECE", buf.getvalue(), "art.png", "image/png", use_container_width=True)
