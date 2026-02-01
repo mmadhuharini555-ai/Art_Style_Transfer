@@ -38,7 +38,7 @@ def apply_ui_design():
             0% {{ transform: translateY(0vh) rotate(0deg) translateX(0px); opacity: 1; }}
             100% {{ transform: translateY(110vh) rotate(360deg) translateX(100px); opacity: 0; }}
         }}
-        [data-testid="stFileUploadDropzone"] div {{ color: #000000 !important; font-weight: 700 !important; }}
+        [data-testid="stFileUploadDropzone"] div {{ color: #FF00DE !important; font-weight: 700 !important; }}
         [data-testid="stFileUploadDropzone"] button span {{ color: #000000 !important; font-weight: 800 !important; }}
         [data-testid="stFileUploadDropzone"] small {{ color: #333333 !important; font-weight: 600 !important; }}
         .stButton>button {{
@@ -136,4 +136,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
