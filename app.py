@@ -6,7 +6,7 @@ from PIL import Image
 import io
 
 # -------------------------------
-# 🎨 UI & SAKURA STYLING
+# 🎨 UI & SAKURA STYLING (KEEPING YOUR DESIGN)
 # -------------------------------
 def apply_ui_design():
     bg_img = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1920"
@@ -29,7 +29,6 @@ def apply_ui_design():
             filter: drop-shadow(0 0 10px rgba(0, 198, 255, 0.5));
         }}
         
-        /* SIDEBAR NAMES - HIGH VISIBILITY VIBRANT CYAN */
         [data-testid="stSidebar"] [data-testid="stImageCaption"] {{
             color: #00f2ff !important;
             font-weight: 800 !important;
@@ -49,9 +48,6 @@ def apply_ui_design():
             100% {{ transform: translateY(110vh) rotate(360deg) translateX(100px); opacity: 0; }}
         }}
         
-        [data-testid="stFileUploadDropzone"] div {{ color: #FF00DE !important; font-weight: 700 !important; }}
-        [data-testid="stFileUploadDropzone"] button span {{ color: #000000 !important; font-weight: 800 !important; }}
-        
         .stButton>button {{
             background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
             color: white !important; font-weight: 800 !important;
@@ -62,10 +58,18 @@ def apply_ui_design():
             background: linear-gradient(45deg, #f781f3, #ee0979) !important;
             color: white !important; font-weight: 800 !important;
             border-radius: 12px !important; border: none !important;
-            margin-top: 10px;
         }}
         .big-label {{ font-size: 32px !important; font-weight: 800; color: #00c6ff; text-align: center; }}
         [data-testid="stSidebar"] {{ background: rgba(0, 0, 0, 0.8) !important; border-right: 2px solid #ee0979; }}
+        
+        /* History Section Styling */
+        .history-card {{
+            border: 2px solid #ee0979;
+            border-radius: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }}
     </style>
     
     <div class="sakura" style="left:10%; animation-duration:10s;">🌸</div>
@@ -76,7 +80,7 @@ def apply_ui_design():
     """, unsafe_allow_html=True)
 
 # -------------------------------
-# 🧠 AI ENGINE (ULTRA SPEED)
+# 🧠 AI ENGINE (KEEPING YOUR SPEED)
 # -------------------------------
 @st.cache_resource
 def load_fast_model():
@@ -85,8 +89,8 @@ def load_fast_model():
 def load_and_prep_img(image_file, target_dim=512):
     img = Image.open(image_file).convert('RGB')
     img.thumbnail((target_dim, target_dim))
-    img = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
-    return tf.constant(img)
+    img_array = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
+    return tf.constant(img_array), img
 
 # -------------------------------
 # 🚀 APP INTERFACE
@@ -94,6 +98,10 @@ def load_and_prep_img(image_file, target_dim=512):
 def main():
     st.set_page_config(page_title="Neural Art Pro", layout="wide")
     apply_ui_design()
+
+    # INITIALIZE HISTORY
+    if 'history' not in st.session_state:
+        st.session_state.history = []
 
     with st.sidebar:
         st.markdown("<h1 style='color:#ee0979;'>Gallery Inspirations</h1>", unsafe_allow_html=True)
@@ -104,7 +112,6 @@ def main():
             ("Oil Abstraction", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=300")
         ]
         for name, url in styles_ref:
-            # The CSS above targets these captions to make them Electric Cyan
             st.image(url, caption=name, use_column_width=True)
 
     st.markdown('<h1 class="main-title">Alchemy of Styles</h1>', unsafe_allow_html=True)
@@ -124,27 +131,66 @@ def main():
         if st.button("✨ PAINT MASTERPIECE"):
             with st.status("🌸 Creating Masterpiece...", expanded=True):
                 model = load_fast_model()
-                content_img = load_and_prep_img(c_file, target_dim=1024)
-                style_img = load_and_prep_img(s_file, target_dim=512)
-                outputs = model(content_img, style_img)
-                stylized_img = outputs[0]
-                final_art = np.array(stylized_img[0] * 255).astype(np.uint8)
+                # Prepare images (get tensor for AI and PIL for history)
+                content_tensor, content_pil = load_and_prep_img(c_file, target_dim=1024)
+                style_tensor, _ = load_and_prep_img(s_file, target_dim=512)
+                
+                # AI magic
+                outputs = model(content_tensor, style_tensor)
+                final_art_np = np.array(outputs[0][0] * 255).astype(np.uint8)
+                final_art_pil = Image.fromarray(final_art_np)
+                
+                # SAVE TO HISTORY
+                st.session_state.history.insert(0, {
+                    "masterpiece": final_art_pil,
+                    "original": content_pil
+                })
             
-            # VIBRANT NEON PINK TRANSFORMATION TEXT
+            # --- 📸 COMPARISON LAYOUT ---
             st.markdown("""
-                <div style='text-align:center; margin-top: 20px; margin-bottom: 20px;'>
-                    <h2 style='color: #fff; text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de, 0 0 40px #ff00de; font-weight: 900; font-size: 45px;'>
+                <div style='text-align:center; margin-top: 20px; margin-bottom: 10px;'>
+                    <h2 style='color: #fff; text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de; font-weight: 900; font-size: 40px;'>
                         🌸 TRANSFORMATION COMPLETE! 🌸
                     </h2>
                 </div>
             """, unsafe_allow_html=True)
+
+            comp1, comp2 = st.columns(2)
+            with comp1:
+                st.markdown("<h3 style='color:#00c6ff; text-align:center;'>Before</h3>", unsafe_allow_html=True)
+                st.image(content_pil, use_column_width=True)
+            with comp2:
+                st.markdown("<h3 style='color:#ee0979; text-align:center;'>After</h3>", unsafe_allow_html=True)
+                st.image(final_art_pil, use_column_width=True)
             
-            _, m2, _ = st.columns([1, 2, 1])
-            with m2:
-                st.image(final_art, use_column_width=True)
-                buf = io.BytesIO()
-                Image.fromarray(final_art).save(buf, format="PNG")
-                st.download_button(label="📥 DOWNLOAD MASTERPIECE", data=buf.getvalue(), file_name="masterpiece.png", mime="image/png")
+            # Download current result
+            buf = io.BytesIO()
+            final_art_pil.save(buf, format="PNG")
+            st.download_button(label="📥 DOWNLOAD THIS MASTERPIECE", data=buf.getvalue(), file_name="masterpiece.png", mime="image/png", use_container_width=True)
+
+    # --- 🏺 HISTORY VAULT SECTION ---
+    if st.session_state.history:
+        st.markdown("<br><hr style='border: 1px solid #ee0979;'><h1 style='color:#00c6ff; text-align:center;'>🏛️ Your History Vault</h1>", unsafe_allow_html=True)
+        
+        # Display history in a grid
+        cols = st.columns(3)
+        for idx, item in enumerate(st.session_state.history):
+            col_idx = idx % 3
+            with cols[col_idx]:
+                st.markdown(f"<div class='history-card'>", unsafe_allow_html=True)
+                st.image(item['masterpiece'], caption=f"Creation #{len(st.session_state.history) - idx}", use_column_width=True)
+                
+                # History Download Button
+                hist_buf = io.BytesIO()
+                item['masterpiece'].save(hist_buf, format="PNG")
+                st.download_button(
+                    label=f"Download #{len(st.session_state.history) - idx}", 
+                    data=hist_buf.getvalue(), 
+                    file_name=f"history_{idx}.png", 
+                    mime="image/png",
+                    key=f"btn_{idx}"
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
