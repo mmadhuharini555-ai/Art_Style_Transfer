@@ -110,10 +110,10 @@ def main():
         st.markdown('<p class="big-label">🖼️ Subject Image</p>', unsafe_allow_html=True)
         c_file = st.file_uploader("C", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
     with s_col1:
-        st.markdown('<p class="big-label" style="font-size:22px !important;">🎨 Style A</p>', unsafe_allow_html=True)
+        st.markdown('<p class="big-label" style="font-size:22px !important;">🎨 Artistic Style A</p>', unsafe_allow_html=True)
         s_file1 = st.file_uploader("S1", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
     with s_col2:
-        st.markdown('<p class="big-label" style="font-size:22px !important;">🎨 Style B</p>', unsafe_allow_html=True)
+        st.markdown('<p class="big-label" style="font-size:22px !important;">🎨 Artistic Style B</p>', unsafe_allow_html=True)
         s_file2 = st.file_uploader("S2", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
 
     if c_file and (s_file1 or s_file2):
@@ -190,3 +190,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
