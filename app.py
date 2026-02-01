@@ -2,8 +2,9 @@ import streamlit as st
 import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
-from PIL import Image, ImageEnhance, ImageDraw
+from PIL import Image, ImageEnhance, ImageDraw, ImageFont
 import io
+import os
 
 # -------------------------------
 # 🎨 UI & SAKURA STYLING
@@ -48,9 +49,7 @@ def apply_ui_design():
         }}
         .big-label {{ font-size: 28px !important; font-weight: 800; color: #00c6ff; text-align: center; margin-bottom: 10px; }}
         [data-testid="stSidebar"] {{ background: rgba(0, 0, 0, 0.85) !important; border-right: 2px solid #ee0979; }}
-        .streamlit-expanderHeader {{ color: #ee0979 !important; font-weight: 800 !important; font-size: 1.1rem !important; }}
         
-        /* Comparison Text Styles */
         .comp-label-before {{
             color: #00c6ff; font-weight: 900; font-size: 30px; text-align: center;
             text-shadow: 0 0 10px #00c6ff; text-transform: uppercase; margin-bottom: 10px;
@@ -78,6 +77,40 @@ def prep_img_for_model(img, target_dim):
     img = img.resize((target_dim, target_dim))
     img_array = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
     return tf.constant(img_array)
+
+def add_artist_signature(img, name, color, font_style):
+    if not name: return img
+    
+    draw = ImageDraw.Draw(img)
+    # Scale font size based on image height (roughly 6% of image height)
+    font_size = int(img.size[1] * 0.06)
+    
+    try:
+        # Attempt to load common system fonts based on selection
+        if font_style == "Classic Serif":
+            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-BoldItalic.ttf", font_size)
+        elif font_style == "Elegant Script":
+            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf", font_size)
+        elif font_style == "Tech Mono":
+            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf", font_size)
+        else: # Modern Sans
+            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", font_size)
+    except:
+        font = ImageFont.load_default()
+
+    # Calculate position (Bottom Right)
+    bbox = draw.textbbox((0, 0), name, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+    
+    x = img.size[0] - text_width - 40
+    y = img.size[1] - text_height - 60
+
+    # Draw Shadow for visibility
+    draw.text((x+3, y+3), name, font=font, fill=(0,0,0)) 
+    # Draw Main Signature
+    draw.text((x, y), name, font=font, fill=color)
+    return img
 
 # -------------------------------
 # 🚀 APP INTERFACE
@@ -107,7 +140,8 @@ def main():
             st.markdown("<hr style='border:0.5px solid #333'>", unsafe_allow_html=True)
             st.markdown("<h4 style='color:#00c6ff;'>✒️ Artist Pro</h4>", unsafe_allow_html=True)
             signature = st.text_input("🖋️ Signature Name", "")
-            sig_color = st.color_picker("🎨 Color", "#00f2ff")
+            sig_color = st.color_picker("🎨 Signature Color", "#00f2ff")
+            font_choice = st.selectbox("📜 Font Style", ["Modern Sans", "Classic Serif", "Elegant Script", "Tech Mono"])
 
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
             styles_ref = [
@@ -188,15 +222,13 @@ def main():
 
                 final_art = Image.blend(content_pil.resize(stylized_pil.size), stylized_pil, strength)
 
-                if signature:
-                    draw = ImageDraw.Draw(final_art)
-                    draw.text((20, final_art.size[1]-50), signature, fill=sig_color)
+                # APPLY THE UPDATED SIGNATURE LOGIC
+                final_art = add_artist_signature(final_art, signature, sig_color, font_choice)
 
                 st.session_state.history.insert(0, {"masterpiece": final_art})
             
             st.markdown("<div style='text-align:center;'><h2 style='color: #fff; text-shadow: 0 0 20px #ff00de; font-weight: 900; font-size: 45px;'>🌸 TRANSFORMATION COMPLETE! 🌸</h2></div>", unsafe_allow_html=True)
 
-            # --- THEMATIC BEFORE/AFTER COMPARISON ---
             m_col1, m_col2 = st.columns(2)
             with m_col1:
                 st.markdown("<p class='comp-label-before'>🌑 Mundane Essence</p>", unsafe_allow_html=True)
