@@ -165,7 +165,6 @@ def main():
             purple_abstract = ("Oil Abstraction (Purple)", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500")
             
             inspirations = [
-                purple_abstract, # Added at start
                 ("Van Gogh - Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
                 ("Edvard Munch - The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
                 ("Hokusai - Great Wave", "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/320px-Great_Wave_off_Kanagawa2.jpg"),
@@ -242,3 +241,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
