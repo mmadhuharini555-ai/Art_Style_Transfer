@@ -8,7 +8,7 @@ import os
 import time
 
 # -------------------------------
-# 📁 STORAGE LOGIC (Saves to local disk)
+# 📁 STORAGE LOGIC
 # -------------------------------
 VAULT_DIR = "history_vault"
 if not os.path.exists(VAULT_DIR):
@@ -44,6 +44,14 @@ def apply_ui_design():
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(0, 198, 255, 0.5));
         }}
+        /* FIX: GALLERY REFERENCE FONT VISIBILITY */
+        [data-testid="stSidebar"] [data-testid="stImageCaption"] {{
+            color: #00f2ff !important; 
+            font-weight: 800 !important; 
+            font-size: 1.1rem !important;
+            text-shadow: 2px 2px 8px rgba(0,0,0,1); 
+            text-align: center;
+        }}
         [data-testid="stSidebar"] {{ background: rgba(0, 0, 0, 0.9) !important; border-right: 2px solid #ee0979; }}
         .stButton>button {{
             background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
@@ -74,7 +82,6 @@ def load_fast_model():
     return hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
 
 def prep_img_for_model(img, target_dim):
-    # High quality resizing
     img = img.resize((target_dim, target_dim), Image.Resampling.LANCZOS)
     img_array = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
     return tf.constant(img_array)
@@ -134,7 +141,6 @@ def main():
             st.markdown("<h4 style='color:#00c6ff;'>🎚️ Style Control</h4>", unsafe_allow_html=True)
             strength = st.slider("✨ Alchemy Strength", 0.0, 1.0, 0.8)
             
-            # Integrated Style Fusion slider
             fusion = 0.5
             if s_file1 and s_file2:
                 fusion = st.slider("🔗 Style Fusion (A vs B)", 0.0, 1.0, 0.5)
@@ -155,12 +161,12 @@ def main():
             sig_size = st.slider("📏 Signature Size", 3, 15, 7)
             sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
-        # RESTORED GALLERY INSPIRATIONS
+        # UPDATED: GALLERY INSPIRATIONS WITH OIL ABSTRACTION & BETTER VISIBILITY
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
             inspirations = [
+                ("Oil Abstraction", "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=500"),
                 ("Van Gogh - Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
                 ("Edvard Munch - The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
-                ("Kandinsky - Composition VII", "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Vassily_Kandinsky%2C_1913_-_Composition_7.jpg/320px-Vassily_Kandinsky%2C_1913_-_Composition_7.jpg"),
                 ("Hokusai - Great Wave", "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/320px-Great_Wave_off_Kanagawa2.jpg"),
                 ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=300")
             ]
@@ -211,7 +217,6 @@ def main():
                 stylized_np = np.array(outputs[0][0] * 255).astype(np.uint8)
                 stylized_pil = Image.fromarray(stylized_np)
 
-                # High Quality Blending & Post-Processing Gallery Polish
                 final_art = Image.blend(content_pil.resize(stylized_pil.size, Image.Resampling.LANCZOS), stylized_pil, strength)
                 final_art = ImageEnhance.Sharpness(final_art).enhance(1.4)
                 final_art = ImageEnhance.Color(final_art).enhance(1.2)
