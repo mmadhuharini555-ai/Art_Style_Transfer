@@ -44,7 +44,6 @@ def apply_ui_design():
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(0, 198, 255, 0.5));
         }}
-        /* FIX: GALLERY REFERENCE FONT VISIBILITY */
         [data-testid="stSidebar"] [data-testid="stImageCaption"] {{
             color: #00f2ff !important; 
             font-weight: 800 !important; 
@@ -161,14 +160,17 @@ def main():
             sig_size = st.slider("📏 Signature Size", 3, 15, 7)
             sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
-        # UPDATED: GALLERY INSPIRATIONS WITH OIL ABSTRACTION & BETTER VISIBILITY
+        # UPDATED: GALLERY INSPIRATIONS (Purple Abstract at start and end)
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
+            purple_abstract = ("Oil Abstraction (Purple)", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500")
+            
             inspirations = [
-                ("Oil Abstraction", "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=500"),
+                purple_abstract, # Added at start
                 ("Van Gogh - Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
                 ("Edvard Munch - The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
                 ("Hokusai - Great Wave", "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/320px-Great_Wave_off_Kanagawa2.jpg"),
-                ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=300")
+                ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=300"),
+                purple_abstract # Added at end
             ]
             for name, url in inspirations:
                 st.image(url, caption=name, use_column_width=True)
@@ -217,6 +219,7 @@ def main():
                 stylized_np = np.array(outputs[0][0] * 255).astype(np.uint8)
                 stylized_pil = Image.fromarray(stylized_np)
 
+                # High Quality Blending & Post-Processing Gallery Polish
                 final_art = Image.blend(content_pil.resize(stylized_pil.size, Image.Resampling.LANCZOS), stylized_pil, strength)
                 final_art = ImageEnhance.Sharpness(final_art).enhance(1.4)
                 final_art = ImageEnhance.Color(final_art).enhance(1.2)
