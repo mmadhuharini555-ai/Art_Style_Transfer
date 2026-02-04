@@ -8,7 +8,7 @@ import os
 import time
 
 # -------------------------------
-# 📁 STORAGE LOGIC
+# 📁 STORAGE LOGIC (Saves to local disk)
 # -------------------------------
 VAULT_DIR = "history_vault"
 if not os.path.exists(VAULT_DIR):
@@ -44,7 +44,7 @@ def apply_ui_design():
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(0, 198, 255, 0.5));
         }}
-        [data-testid="stSidebar"] {{ background: rgba(0, 0, 0, 0.85) !important; border-right: 2px solid #ee0979; }}
+        [data-testid="stSidebar"] {{ background: rgba(0, 0, 0, 0.9) !important; border-right: 2px solid #ee0979; }}
         .stButton>button {{
             background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
             color: white !important; font-weight: 800 !important;
@@ -74,6 +74,7 @@ def load_fast_model():
     return hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
 
 def prep_img_for_model(img, target_dim):
+    # High quality resizing
     img = img.resize((target_dim, target_dim), Image.Resampling.LANCZOS)
     img_array = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
     return tf.constant(img_array)
@@ -89,6 +90,7 @@ def apply_signature_v2(img, text, color, font_style, scale, position):
         font = ImageFont.truetype(font_path, font_size)
     except:
         font = ImageFont.load_default()
+    
     bbox = draw.textbbox((0, 0), text, font=font)
     w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
     margin = 40
@@ -96,6 +98,7 @@ def apply_signature_v2(img, text, color, font_style, scale, position):
     elif position == "Bottom Left": x, y = margin, img.size[1] - h - margin - 20
     elif position == "Top Right": x, y = img.size[0] - w - margin, margin
     else: x, y = margin, margin
+    
     for offset in [(2,2), (-2,-2), (2,-2), (-2,2), (0,2), (0,-2), (2,0), (-2,0)]:
         draw.text((x + offset[0], y + offset[1]), text, font=font, fill=(0,0,0))
     draw.text((x, y), text, font=font, fill=color)
@@ -131,7 +134,7 @@ def main():
             st.markdown("<h4 style='color:#00c6ff;'>🎚️ Style Control</h4>", unsafe_allow_html=True)
             strength = st.slider("✨ Alchemy Strength", 0.0, 1.0, 0.8)
             
-            # Merged Style Fusion slider
+            # Integrated Style Fusion slider
             fusion = 0.5
             if s_file1 and s_file2:
                 fusion = st.slider("🔗 Style Fusion (A vs B)", 0.0, 1.0, 0.5)
@@ -152,6 +155,18 @@ def main():
             sig_size = st.slider("📏 Signature Size", 3, 15, 7)
             sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
+        # RESTORED GALLERY INSPIRATIONS
+        with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
+            inspirations = [
+                ("Van Gogh - Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
+                ("Edvard Munch - The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
+                ("Kandinsky - Composition VII", "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Vassily_Kandinsky%2C_1913_-_Composition_7.jpg/320px-Vassily_Kandinsky%2C_1913_-_Composition_7.jpg"),
+                ("Hokusai - Great Wave", "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/320px-Great_Wave_off_Kanagawa2.jpg"),
+                ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=300")
+            ]
+            for name, url in inspirations:
+                st.image(url, caption=name, use_column_width=True)
+
         with st.expander("🏺 History Vault 📜", expanded=False):
             vault_files = get_vault_images()
             if not vault_files:
@@ -162,19 +177,20 @@ def main():
                     with open(f_path, "rb") as file:
                         st.download_button(label="📥 Download", data=file, file_name=os.path.basename(f_path), mime="image/png", key=f"dl_{f_path}")
 
-    # PREVIEWS
+    # DARKROOM PREVIEWS
     if c_file:
         content_pil = Image.open(c_file).convert("RGB")
         content_pil = ImageEnhance.Brightness(content_pil).enhance(bright)
         content_pil = ImageEnhance.Contrast(content_pil).enhance(contr)
         content_pil = ImageEnhance.Sharpness(content_pil).enhance(sharp)
-        with c_col: st.image(content_pil, caption="Live Preview", use_column_width=True)
+        with c_col: st.image(content_pil, caption="Live Darkroom Preview", use_column_width=True)
 
     if s_file1:
         with s_col1: st.image(s_file1, use_column_width=True)
     if s_file2:
         with s_col2: st.image(s_file2, use_column_width=True)
 
+    # 🎨 PROCESSING ENGINE
     if c_file and (s_file1 or s_file2):
         if st.button("✨ PAINT MASTERPIECE"):
             with st.status("🌸 Transmuting Art...", expanded=True):
@@ -183,8 +199,8 @@ def main():
                 content_tensor = prep_img_for_model(content_pil, target_dim)
 
                 if s_file1 and s_file2:
-                    s1 = Image.open(s_file1).convert("RGB").resize((512, 512))
-                    s2 = Image.open(s_file2).convert("RGB").resize((512, 512))
+                    s1 = Image.open(s_file1).convert("RGB").resize((512, 512), Image.Resampling.LANCZOS)
+                    s2 = Image.open(s_file2).convert("RGB").resize((512, 512), Image.Resampling.LANCZOS)
                     style_pil = Image.blend(s1, s2, fusion)
                 else:
                     style_pil = Image.open(s_file1 or s_file2).convert("RGB")
@@ -195,7 +211,7 @@ def main():
                 stylized_np = np.array(outputs[0][0] * 255).astype(np.uint8)
                 stylized_pil = Image.fromarray(stylized_np)
 
-                # High Quality Blending & Post-Processing
+                # High Quality Blending & Post-Processing Gallery Polish
                 final_art = Image.blend(content_pil.resize(stylized_pil.size, Image.Resampling.LANCZOS), stylized_pil, strength)
                 final_art = ImageEnhance.Sharpness(final_art).enhance(1.4)
                 final_art = ImageEnhance.Color(final_art).enhance(1.2)
