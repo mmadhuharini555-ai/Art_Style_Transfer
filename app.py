@@ -6,7 +6,7 @@ from PIL import Image, ImageEnhance, ImageDraw, ImageFont
 import io
 
 # -------------------------------
-# 🎨 UI & SAKURA STYLING
+# 🎨 UI & SAKURA STYLING (Unchanged)
 # -------------------------------
 def apply_ui_design():
     bg_img = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1920"
@@ -66,7 +66,7 @@ def apply_ui_design():
     """, unsafe_allow_html=True)
 
 # -------------------------------
-# 🧠 AI ENGINE
+# 🧠 AI ENGINE (Unchanged)
 # -------------------------------
 @st.cache_resource
 def load_fast_model():
@@ -79,39 +79,27 @@ def prep_img_for_model(img, target_dim):
 
 def apply_signature_v2(img, text, color, font_style, scale, position):
     if not text: return img
-    
     draw = ImageDraw.Draw(img)
-    # New scaling logic based on user input
     font_size = int(img.size[1] * (scale / 100))
-    
     try:
         paths = ["/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
                  "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]
-        # Selection logic
         font_path = paths[0]
         if font_style == "Classic Serif": font_path = "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf"
         elif font_style == "Tech Mono": font_path = "/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf"
-        
         font = ImageFont.truetype(font_path, font_size)
     except:
         font = ImageFont.load_default()
-
     bbox = draw.textbbox((0, 0), text, font=font)
     w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    
-    # Position logic
     margin = 40
     if position == "Bottom Right": x, y = img.size[0] - w - margin, img.size[1] - h - margin - 20
     elif position == "Bottom Left": x, y = margin, img.size[1] - h - margin - 20
     elif position == "Top Right": x, y = img.size[0] - w - margin, margin
     else: x, y = margin, margin
-
-    # HIGH VISIBILITY GLOW (Draws a border in 8 directions)
-    glow_color = (0, 0, 0) # Black glow for maximum contrast
+    glow_color = (0, 0, 0)
     for offset in [(2,2), (-2,-2), (2,-2), (-2,2), (0,2), (0,-2), (2,0), (-2,0)]:
         draw.text((x + offset[0], y + offset[1]), text, font=font, fill=glow_color)
-
-    # Main text
     draw.text((x, y), text, font=font, fill=color)
     return img
 
@@ -144,8 +132,8 @@ def main():
             signature = st.text_input("🖋️ Signature Name", "")
             sig_color = st.color_picker("🎨 Signature Color", "#00f2ff")
             font_choice = st.selectbox("📜 Font Style", ["Modern Sans", "Classic Serif", "Tech Mono"])
-            sig_size = st.slider("📏 Signature Size", 3, 15, 7) # New feature
-            sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"]) # New feature
+            sig_size = st.slider("📏 Signature Size", 3, 15, 7)
+            sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
             styles_ref = [
@@ -171,10 +159,18 @@ def main():
 
     # 📸 EQUAL 3-COLUMN UPLOADER
     c_col, s_col1, s_col2 = st.columns([1, 1, 1])
+    
+    # --- CHANGED: LIVE PREVIEW LOGIC IN SUBJECT COLUMN ---
     with c_col:
         st.markdown('<p class="big-label">🖼️ Subject Image</p>', unsafe_allow_html=True)
         c_file = st.file_uploader("C", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
-        if c_file: st.image(c_file, use_column_width=True)
+        if c_file: 
+            # Process the preview in real-time as sliders move
+            content_pil = Image.open(c_file).convert("RGB")
+            content_pil = ImageEnhance.Brightness(content_pil).enhance(bright)
+            content_pil = ImageEnhance.Contrast(content_pil).enhance(contr)
+            content_pil = ImageEnhance.Sharpness(content_pil).enhance(sharp)
+            st.image(content_pil, caption="Live Preview (Darkroom Applied)", use_column_width=True)
         
     with s_col1:
         st.markdown('<p class="big-label">🎨 Style A</p>', unsafe_allow_html=True)
@@ -198,10 +194,7 @@ def main():
                 model = load_fast_model()
                 target_dim = 512 if "Fast" in res_mode else 1024
                 
-                content_pil = Image.open(c_file).convert("RGB")
-                content_pil = ImageEnhance.Brightness(content_pil).enhance(bright)
-                content_pil = ImageEnhance.Contrast(content_pil).enhance(contr)
-                content_pil = ImageEnhance.Sharpness(content_pil).enhance(sharp)
+                # --- USE THE ALREADY ENHANCED content_pil FROM ABOVE ---
                 content_tensor = prep_img_for_model(content_pil, target_dim)
 
                 if s_file1 and s_file2:
@@ -220,8 +213,6 @@ def main():
                 stylized_pil = Image.fromarray(stylized_np)
 
                 final_art = Image.blend(content_pil.resize(stylized_pil.size), stylized_pil, strength)
-
-                # APPLY THE NEW HIGH-CONTRAST SIGNATURE V2
                 final_art = apply_signature_v2(final_art, signature, sig_color, font_choice, sig_size, sig_pos)
 
                 st.session_state.history.insert(0, {"masterpiece": final_art})
