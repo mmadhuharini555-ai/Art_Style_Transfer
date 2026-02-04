@@ -8,26 +8,26 @@ import os
 import time
 
 # -------------------------------
-# 📁 PERMANENT STORAGE LOGIC
+# 📁 STORAGE LOGIC
 # -------------------------------
 VAULT_DIR = "history_vault"
 if not os.path.exists(VAULT_DIR):
     os.makedirs(VAULT_DIR)
 
-def save_to_permanent_vault(img):
+def save_to_vault(img):
     timestamp = int(time.time())
     file_path = os.path.join(VAULT_DIR, f"art_{timestamp}.png")
     img.save(file_path)
     return file_path
 
 def get_vault_images():
+    if not os.path.exists(VAULT_DIR): return []
     files = [os.path.join(VAULT_DIR, f) for f in os.listdir(VAULT_DIR) if f.endswith(('.png', '.jpg'))]
-    # Sort by creation time (newest first)
     files.sort(key=os.path.getmtime, reverse=True)
     return files
 
 # -------------------------------
-# 🎨 UI & SAKURA STYLING (Unchanged)
+# 🎨 UI & SAKURA STYLING
 # -------------------------------
 def apply_ui_design():
     bg_img = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1920"
@@ -74,7 +74,6 @@ def load_fast_model():
     return hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
 
 def prep_img_for_model(img, target_dim):
-    # Performance Optimization: Using LANCZOS for better downsampling quality
     img = img.resize((target_dim, target_dim), Image.Resampling.LANCZOS)
     img_array = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
     return tf.constant(img_array)
@@ -109,12 +108,10 @@ def main():
     st.set_page_config(page_title="Neural Art Pro", layout="wide")
     apply_ui_design()
 
-    # Define variables early to avoid scope errors in Sidebar
     c_file, s_file1, s_file2 = None, None, None
-
     st.markdown('<h1 class="main-title">Alchemy of Styles</h1>', unsafe_allow_html=True)
 
-    # 📸 UPLOADER SECTION (Now positioned so Sidebar can see files)
+    # 📸 UPLOADER SECTION
     c_col, s_col1, s_col2 = st.columns([1, 1, 1])
     with c_col:
         st.markdown('<p class="big-label">🖼️ Subject Image</p>', unsafe_allow_html=True)
@@ -134,7 +131,7 @@ def main():
             st.markdown("<h4 style='color:#00c6ff;'>🎚️ Style Control</h4>", unsafe_allow_html=True)
             strength = st.slider("✨ Alchemy Strength", 0.0, 1.0, 0.8)
             
-            # MERGED FUSION SLIDER
+            # Merged Style Fusion slider
             fusion = 0.5
             if s_file1 and s_file2:
                 fusion = st.slider("🔗 Style Fusion (A vs B)", 0.0, 1.0, 0.5)
@@ -155,7 +152,7 @@ def main():
             sig_size = st.slider("📏 Signature Size", 3, 15, 7)
             sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
-        with st.expander("🏺 History Vault 📜 (Permanent)", expanded=False):
+        with st.expander("🏺 History Vault 📜", expanded=False):
             vault_files = get_vault_images()
             if not vault_files:
                 st.info("Vault is empty...")
@@ -165,7 +162,7 @@ def main():
                     with open(f_path, "rb") as file:
                         st.download_button(label="📥 Download", data=file, file_name=os.path.basename(f_path), mime="image/png", key=f"dl_{f_path}")
 
-    # PREVIEWS & PROCESSING
+    # PREVIEWS
     if c_file:
         content_pil = Image.open(c_file).convert("RGB")
         content_pil = ImageEnhance.Brightness(content_pil).enhance(bright)
@@ -183,7 +180,6 @@ def main():
             with st.status("🌸 Transmuting Art...", expanded=True):
                 model = load_fast_model()
                 target_dim = 512 if "Fast" in res_mode else 1024
-                
                 content_tensor = prep_img_for_model(content_pil, target_dim)
 
                 if s_file1 and s_file2:
@@ -193,23 +189,19 @@ def main():
                 else:
                     style_pil = Image.open(s_file1 or s_file2).convert("RGB")
                 
-                style_tensor = prep_img_for_model(style_pil, 256) # Magenta works best with 256px style tensors
+                style_tensor = prep_img_for_model(style_pil, 256)
 
                 outputs = model(content_tensor, style_tensor)
                 stylized_np = np.array(outputs[0][0] * 255).astype(np.uint8)
                 stylized_pil = Image.fromarray(stylized_np)
 
-                # QUALITY UPGRADE: Better blending and post-processing
+                # High Quality Blending & Post-Processing
                 final_art = Image.blend(content_pil.resize(stylized_pil.size, Image.Resampling.LANCZOS), stylized_pil, strength)
-                
-                # Apply High-Quality "Gallery" finish
                 final_art = ImageEnhance.Sharpness(final_art).enhance(1.4)
                 final_art = ImageEnhance.Color(final_art).enhance(1.2)
-                
                 final_art = apply_signature_v2(final_art, signature, sig_color, font_choice, sig_size, sig_pos)
 
-                # PERMANENT SAVE
-                save_to_permanent_vault(final_art)
+                save_to_vault(final_art)
             
             st.markdown("<div style='text-align:center;'><h2 style='color: #fff; text-shadow: 0 0 20px #ff00de; font-weight: 900; font-size: 45px;'>🌸 TRANSFORMATION COMPLETE! 🌸</h2></div>", unsafe_allow_html=True)
 
