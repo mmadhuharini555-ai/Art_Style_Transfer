@@ -1,13 +1,17 @@
+# --- STEP 1: THE CRITICAL FIX FOR PYTHON 3.13 ---
+import sys
+from types import ModuleType
+
+# This "fakes" the missing pkg_resources module so tensorflow_hub doesn't crash
+if 'pkg_resources' not in sys.modules:
+    pkg_mock = ModuleType('pkg_resources')
+    # This provides the specific function tensorflow_hub is looking for
+    pkg_mock.parse_version = lambda v: [int(x) for x in v.split('.') if x.isdigit()]
+    sys.modules['pkg_resources'] = pkg_mock
+# -----------------------------------------------
+
 import streamlit as st
 import tensorflow as tf
-# Added a check for setuptools which provides pkg_resources
-try:
-    import pkg_resources
-except ImportError:
-    import subprocess
-    import sys
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "setuptools"])
-
 import tensorflow_hub as hub
 import numpy as np
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
@@ -93,20 +97,15 @@ def prep_img_for_model(img, target_dim):
     img_array = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
     return tf.constant(img_array)
 
-# UPDATED: Safer font handling for Streamlit Cloud
 def apply_signature_v2(img, text, color, font_style, scale, position):
     if not text: return img
     draw = ImageDraw.Draw(img)
     font_size = int(img.size[1] * (scale / 100))
-    
-    # Standard paths for fonts on Streamlit Cloud (Debian/Ubuntu)
     try:
-        if font_style == "Classic Serif": 
-            font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
-        elif font_style == "Tech Mono": 
-            font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
-        else: # Modern Sans
-            font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        # Standard paths for fonts on Streamlit Cloud (Debian)
+        if font_style == "Classic Serif": font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
+        elif font_style == "Tech Mono": font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+        else: font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
         font = ImageFont.truetype(font_path, font_size)
     except:
         font = ImageFont.load_default()
@@ -174,16 +173,14 @@ def main():
             sig_size = st.slider("📏 Signature Size", 3, 15, 7)
             sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
-        # UPDATED: GALLERY INSPIRATIONS (Purple Abstract at start and end)
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
             purple_abstract = ("Oil Abstraction (Purple)", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500")
-            
             inspirations = [
                 ("Van Gogh - Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
                 ("Edvard Munch - The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
                 ("Hokusai - Great Wave", "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/320px-Great_Wave_off_Kanagawa2.jpg"),
                 ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=300"),
-                purple_abstract # Added at end
+                purple_abstract
             ]
             for name, url in inspirations:
                 st.image(url, caption=name, use_column_width=True)
@@ -198,7 +195,6 @@ def main():
                     with open(f_path, "rb") as file:
                         st.download_button(label="📥 Download", data=file, file_name=os.path.basename(f_path), mime="image/png", key=f"dl_{f_path}")
 
-    # DARKROOM PREVIEWS
     if c_file:
         content_pil = Image.open(c_file).convert("RGB")
         content_pil = ImageEnhance.Brightness(content_pil).enhance(bright)
@@ -211,7 +207,6 @@ def main():
     if s_file2:
         with s_col2: st.image(s_file2, use_column_width=True)
 
-    # 🎨 PROCESSING ENGINE
     if c_file and (s_file1 or s_file2):
         if st.button("✨ PAINT MASTERPIECE"):
             with st.status("🌸 Transmuting Art...", expanded=True):
@@ -232,7 +227,6 @@ def main():
                 stylized_np = np.array(outputs[0][0] * 255).astype(np.uint8)
                 stylized_pil = Image.fromarray(stylized_np)
 
-                # High Quality Blending & Post-Processing Gallery Polish
                 final_art = Image.blend(content_pil.resize(stylized_pil.size, Image.Resampling.LANCZOS), stylized_pil, strength)
                 final_art = ImageEnhance.Sharpness(final_art).enhance(1.4)
                 final_art = ImageEnhance.Color(final_art).enhance(1.2)
