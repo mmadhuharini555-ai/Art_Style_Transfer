@@ -1,5 +1,13 @@
 import streamlit as st
 import tensorflow as tf
+# Added a check for setuptools which provides pkg_resources
+try:
+    import pkg_resources
+except ImportError:
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "setuptools"])
+
 import tensorflow_hub as hub
 import numpy as np
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
@@ -85,14 +93,20 @@ def prep_img_for_model(img, target_dim):
     img_array = np.array(img).astype(np.float32)[np.newaxis, ...] / 255.0
     return tf.constant(img_array)
 
+# UPDATED: Safer font handling for Streamlit Cloud
 def apply_signature_v2(img, text, color, font_style, scale, position):
     if not text: return img
     draw = ImageDraw.Draw(img)
     font_size = int(img.size[1] * (scale / 100))
+    
+    # Standard paths for fonts on Streamlit Cloud (Debian/Ubuntu)
     try:
-        font_path = "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
-        if font_style == "Classic Serif": font_path = "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf"
-        elif font_style == "Tech Mono": font_path = "/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf"
+        if font_style == "Classic Serif": 
+            font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
+        elif font_style == "Tech Mono": 
+            font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+        else: # Modern Sans
+            font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
         font = ImageFont.truetype(font_path, font_size)
     except:
         font = ImageFont.load_default()
@@ -241,4 +255,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
