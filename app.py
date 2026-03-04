@@ -102,7 +102,6 @@ def apply_signature_v2(img, text, color, font_style, scale, position):
     draw = ImageDraw.Draw(img)
     font_size = int(img.size[1] * (scale / 100))
     try:
-        # Standard paths for fonts on Streamlit Cloud (Debian)
         if font_style == "Classic Serif": font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
         elif font_style == "Tech Mono": font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
         else: font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -174,13 +173,13 @@ def main():
             sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
-            purple_abstract = ("Oil Abstraction (Purple)", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500")
+            # UPDATED URLS HERE
             inspirations = [
-                ("Van Gogh - Starry Night", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/300px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"),
-                ("Edvard Munch - The Scream", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/300px-The_Scream.jpg"),
-                ("Hokusai - Great Wave", "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/320px-Great_Wave_off_Kanagawa2.jpg"),
-                ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=300"),
-                purple_abstract
+                ("Van Gogh - Starry Night", "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L3VscmwxOC1pbWFnZS1rd3Z5Znc2bi5qcGc.jpg"),
+                ("Edvard Munch - The Scream", "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2xyL3VscmwxOC1pbWFnZS1rd3Z5Znlvdy5qcGc.jpg"),
+                ("Hokusai - Great Wave", "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L3VscmwxOC1pbWFnZS1rd3Z5Z2Z0MC5qcGc.jpg"),
+                ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=500"),
+                ("Oil Abstraction (Purple)", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500")
             ]
             for name, url in inspirations:
                 st.image(url, caption=name, use_column_width=True)
