@@ -173,12 +173,12 @@ def main():
             sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
-            # FIXED: STABLE DIRECT LINKS
+            # CORRECT MASTERPIECE IMAGES (DIRECT RAW LINKS)
             inspirations = [
-                ("Van Gogh - Starry Night", "https://images.unsplash.com/flagged/photo-1572392640988-ba48d1a74457?w=600"),
-                ("Edvard Munch - The Scream", "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600"),
-                ("Hokusai - Great Wave", "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=600"),
-                ("Stained Glass Art", "https://images.unsplash.com/photo-1508802035342-ee52ed32610d?w=600"),
+                ("Van Gogh - Starry Night", "https://raw.githubusercontent.com/jcjohnson/fast-neural-style/master/images/styles/starry_night.jpg"),
+                ("Edvard Munch - The Scream", "https://raw.githubusercontent.com/jcjohnson/fast-neural-style/master/images/styles/the_scream.jpg"),
+                ("Hokusai - Great Wave", "https://raw.githubusercontent.com/jcjohnson/fast-neural-style/master/images/styles/wave.jpg"),
+                ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=600"),
                 ("Oil Abstraction (Purple)", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=600")
             ]
             for name, url in inspirations:
