@@ -102,7 +102,6 @@ def apply_signature_v2(img, text, color, font_style, scale, position):
     draw = ImageDraw.Draw(img)
     font_size = int(img.size[1] * (scale / 100))
     try:
-        # Standard paths for fonts on Streamlit Cloud (Debian)
         if font_style == "Classic Serif": font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
         elif font_style == "Tech Mono": font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
         else: font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -174,16 +173,16 @@ def main():
             sig_pos = st.selectbox("📍 Position", ["Bottom Right", "Bottom Left", "Top Right", "Top Left"])
 
         with st.expander("🎨 Gallery Inspirations 💎", expanded=False):
-            # FIXED IMAGE LINKS BELOW
+            # FIXED: STABLE DIRECT LINKS
             inspirations = [
-                ("Van Gogh - Starry Night", "https://raw.githubusercontent.com/pytorch/examples/master/fast_neural_style/images/style-images/starry-night.jpg"),
-                ("Edvard Munch - The Scream", "https://raw.githubusercontent.com/shafeen/neural-style-transfer/master/images/style/the_scream.jpg"),
-                ("Hokusai - Great Wave", "https://raw.githubusercontent.com/shafeen/neural-style-transfer/master/images/style/wave.jpg"),
-                ("Stained Glass Art", "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=500"),
-                ("Oil Abstraction (Purple)", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500")
+                ("Van Gogh - Starry Night", "https://images.unsplash.com/flagged/photo-1572392640988-ba48d1a74457?w=600"),
+                ("Edvard Munch - The Scream", "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600"),
+                ("Hokusai - Great Wave", "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=600"),
+                ("Stained Glass Art", "https://images.unsplash.com/photo-1508802035342-ee52ed32610d?w=600"),
+                ("Oil Abstraction (Purple)", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=600")
             ]
             for name, url in inspirations:
-                st.image(url, caption=name, use_column_width=True)
+                st.image(url, caption=name, use_container_width=True)
 
         with st.expander("🏺 History Vault 📜", expanded=False):
             vault_files = get_vault_images()
@@ -191,7 +190,7 @@ def main():
                 st.info("Vault is empty...")
             else:
                 for f_path in vault_files:
-                    st.image(f_path, use_column_width=True)
+                    st.image(f_path, use_container_width=True)
                     with open(f_path, "rb") as file:
                         st.download_button(label="📥 Download", data=file, file_name=os.path.basename(f_path), mime="image/png", key=f"dl_{f_path}")
 
@@ -200,12 +199,12 @@ def main():
         content_pil = ImageEnhance.Brightness(content_pil).enhance(bright)
         content_pil = ImageEnhance.Contrast(content_pil).enhance(contr)
         content_pil = ImageEnhance.Sharpness(content_pil).enhance(sharp)
-        with c_col: st.image(content_pil, caption="Live Darkroom Preview", use_column_width=True)
+        with c_col: st.image(content_pil, caption="Live Darkroom Preview", use_container_width=True)
 
     if s_file1:
-        with s_col1: st.image(s_file1, use_column_width=True)
+        with s_col1: st.image(s_file1, use_container_width=True)
     if s_file2:
-        with s_col2: st.image(s_file2, use_column_width=True)
+        with s_col2: st.image(s_file2, use_container_width=True)
 
     if c_file and (s_file1 or s_file2):
         if st.button("✨ PAINT MASTERPIECE"):
@@ -239,10 +238,10 @@ def main():
             m_col1, m_col2 = st.columns(2)
             with m_col1:
                 st.markdown("<p class='comp-label-before'>🌑 Mundane Essence</p>", unsafe_allow_html=True)
-                st.image(content_pil, use_column_width=True)
+                st.image(content_pil, use_container_width=True)
             with m_col2:
                 st.markdown("<p class='comp-label-after'>🌟 Alchemy Transmuted</p>", unsafe_allow_html=True)
-                st.image(final_art, use_column_width=True)
+                st.image(final_art, use_container_width=True)
                 buf = io.BytesIO()
                 final_art.save(buf, format="PNG")
                 st.download_button("📥 DOWNLOAD MASTERPIECE", buf.getvalue(), "masterpiece.png", "image/png", use_container_width=True)
